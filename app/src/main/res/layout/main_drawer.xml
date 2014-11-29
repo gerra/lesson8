@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="utf-8"?>
+<android.support.v4.widget.DrawerLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:id="@+id/main_drawer">
+
+    <FrameLayout
+        android:id="@+id/content"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent">
+        <fragment
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:id="@+id/fragment_weather"
+            android:layout_gravity="center"
+            android:name="ru.ifmo.md.lesson8.WeatherFragment"
+            tools:layout="@layout/fragment_weather" />
+    </FrameLayout>
+
+    <fragment
+        android:layout_width="240dp"
+        android:layout_height="match_parent"
+        android:id="@+id/fragment_cities_list"
+        android:layout_gravity="start"
+        android:name="ru.ifmo.md.lesson8.DataClasses.CitiesListFragment"
+        tools:layout="@layout/fragment_cities_list" />
+
+</android.support.v4.widget.DrawerLayout>
