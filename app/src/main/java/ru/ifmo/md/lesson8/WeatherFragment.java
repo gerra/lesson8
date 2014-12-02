@@ -1,20 +1,187 @@
 package ru.ifmo.md.lesson8;
 
 import android.app.Fragment;
+import android.app.LoaderManager;
+import android.content.CursorLoader;
+import android.content.Loader;
+import android.content.res.Configuration;
+import android.database.Cursor;
+import android.net.Uri;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.ImageView;
+import android.widget.ListView;
+import android.widget.TextView;
+
+import ru.ifmo.md.lesson8.DataClasses.ForecastAdapter;
+import ru.ifmo.md.lesson8.DataClasses.WeatherContentProvider;
+import ru.ifmo.md.lesson8.DataClasses.WeatherManager;
 
 /**
  * Created by german on 28.11.14.
  */
-public class WeatherFragment extends Fragment {
+public class WeatherFragment extends Fragment implements LoaderManager.LoaderCallbacks<Cursor>,
+        MainActivity.CityChangedListener {
+    private String curCity;
+    private String curCountry;
+
+    private ListView forecastList;
+    private ForecastAdapter adapter;
+    private LoaderManager loaderManager;
+
+    private final int forecastLoaderID = 0;
+    private final int curWeatherLoaderID = 1;
+
+    // cw = current weather
+    private TextView cwDateView;
+    private TextView cwTimeView;
+    private TextView cwCityView;
+    private TextView cwCountryView;
+    private TextView cwTempView;
+    private ImageView cwCloudyView;
+    private TextView cwWindView;
+    private TextView cwHumidityView;
+    private TextView cwPressureView;
+
+    // "C" or "F"
+    private String tempType = "C";
+
+    private void updateCurWeather(Cursor cursor) {
+        if (cursor.getCount() != 0) {
+            System.out.println("ok " + cursor.getCount());
+            cursor.moveToFirst();
+            boolean found = false;
+            while (cursor.isAfterLast() == false) {
+                String[] cityAndCountry = WeatherManager.getCityAndCountryByWeatherId(
+                        getActivity().getContentResolver(),
+                        cursor.getInt(cursor.getColumnIndexOrThrow(WeatherContentProvider.CUR_WEATHER_ALL_ID)));
+                if (cityAndCountry[0].equals(curCity) && cityAndCountry[1].equals(curCountry)) {
+                    found = true;
+                    break;
+                }
+                cursor.moveToNext();
+            }
+            // System.out.println("ok");
+            if (!found) {
+                return;
+            }
+            int curTemp = cursor.getInt(cursor.getColumnIndexOrThrow(WeatherContentProvider.CUR_WEATHER_TEMP));
+            String curDate = WeatherManager.getDateByWeatherId(
+                    getActivity().getContentResolver(),
+                    cursor.getInt(cursor.getColumnIndexOrThrow(WeatherContentProvider.CUR_WEATHER_ALL_ID)));
+            String curTime = cursor.getString(cursor.getColumnIndexOrThrow(WeatherContentProvider.CUR_WEATHER_TIME));
+            String curWind = cursor.getString(cursor.getColumnIndexOrThrow(WeatherContentProvider.CUR_WEATHER_WIND));
+            String curHumidity = cursor.getString(cursor.getColumnIndexOrThrow(WeatherContentProvider.CUR_WEATHER_HUMIDITY));
+            String curPressure = cursor.getString(cursor.getColumnIndexOrThrow(WeatherContentProvider.CUR_WEATHER_PRESSURE));
+
+            cwDateView.setText(curDate);
+            cwTimeView.setText(curTime);
+            cwCityView.setText(curCity);
+            cwCountryView.setText(curCountry);
+            cwTempView.setText(Integer.toString(curTemp) + "°" + tempType);
+            cwCloudyView.setImageResource(WeatherManager.getCloudyId(
+                    cursor.getString(cursor.getColumnIndexOrThrow(WeatherContentProvider.CUR_WEATHER_CLOUDY))
+            ));
+            cwWindView.setText("Wind: " + curWind);
+            cwHumidityView.setText("Humidity: " + curHumidity);
+            cwPressureView.setText("Pressure: " + curPressure);
+        } else {
+            System.out.println("not ok");
+        }
+    }
+
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
         View view = inflater.inflate(R.layout.fragment_weather, container, false);
         return view;
+    }
+
+    @Override
+    public void onActivityCreated(Bundle savedInstanceState) {
+        super.onActivityCreated(savedInstanceState);
+
+        loaderManager = getLoaderManager();
+        loaderManager.initLoader(forecastLoaderID, null, this);
+        loaderManager.initLoader(curWeatherLoaderID, null, this);
+
+        adapter = new ForecastAdapter(getActivity().getApplicationContext(), null, false);
+        forecastList = (ListView) getView().findViewById(R.id.forecast_list);
+        forecastList.setAdapter(adapter);
+
+        cwDateView = (TextView) getView().findViewById(R.id.cur_weather_date);
+        cwTimeView = (TextView) getView().findViewById(R.id.cur_weather_time);
+        cwCityView = (TextView) getView().findViewById(R.id.cur_weather_city);
+        cwCountryView = (TextView) getView().findViewById(R.id.cur_weather_country);
+        cwTempView = (TextView) getView().findViewById(R.id.cur_weather_temp);
+        cwCloudyView = (ImageView) getView().findViewById(R.id.cur_weather_cloudy);
+        cwWindView = (TextView) getView().findViewById(R.id.cur_weather_wind);
+        cwHumidityView = (TextView) getView().findViewById(R.id.cur_weather_humidity);
+        cwPressureView = (TextView) getView().findViewById(R.id.cur_weather_pressure);
+    }
+
+    @Override
+    public Loader<Cursor> onCreateLoader(int id, Bundle args) {
+        String[] projection;
+        Uri content;
+
+        if (id == forecastLoaderID) {
+            content = WeatherContentProvider.FORECAST_CONTENT;
+        } else /*if (id == curWeatherLoaderID)*/ {
+            content = WeatherContentProvider.CUR_WEATHER_CONTENT;
+        }
+
+        CursorLoader res = new CursorLoader(
+                getActivity().getApplicationContext(),
+                content,
+                null, null, null, null);
+        System.out.println("created");
+        return res;
+    }
+
+    @Override
+    public void onLoadFinished(Loader<Cursor> loader, Cursor data) {
+        if (loader.getId() == forecastLoaderID) {
+            Cursor cursor = WeatherManager.getForecastByCity(
+                    getActivity().getContentResolver(), curCity, curCountry);
+            adapter.swapCursor(cursor);
+        } else /*if (getId() == curWeatherLoaderID) */{
+            updateCurWeather(data);
+        }
+    }
+
+    @Override
+    public void onLoaderReset(Loader<Cursor> loader) {
+        adapter.swapCursor(null);
+        System.out.println("reset");
+    }
+
+    @Override
+    public void changeCity(String city, String country) {
+        curCity = city;
+        curCountry = country;
+        cwCityView.setText(curCity);
+        cwCountryView.setText(curCountry);
+        cwTempView.setText("");
+        cwDateView.setText("");
+        cwTimeView.setText("");
+        cwWindView.setText("");
+        cwHumidityView.setText("");
+        cwPressureView.setText("");
+        cwCloudyView.setImageDrawable(null);
+
+        Uri cc = WeatherContentProvider.CUR_WEATHER_CONTENT;
+        Cursor c = getActivity().getContentResolver().query(
+                cc,
+                null, null, null, null
+        );
+        updateCurWeather(c);
+        c.close();
+        adapter.swapCursor(WeatherManager.getForecastByCity(
+                getActivity().getContentResolver(), city, country
+        ));
     }
 }

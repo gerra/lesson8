@@ -12,7 +12,7 @@
         android:layout_height="wrap_content"
         android:layout_weight="2"
         android:text="23.12"
-        android:textSize="@dimen/forecast_text_size"/>
+        android:textSize="@dimen/forecast_text_size_land"/>
 
     <ImageView
         android:id="@+id/forecast_cloudy"
@@ -28,7 +28,7 @@
         android:gravity="right"
         android:textColor="#8888dd"
         android:text="-23°"
-        android:textSize="@dimen/forecast_text_size" />
+        android:textSize="@dimen/forecast_text_size_land" />
     <TextView
         android:id="@+id/forecast_temp_high"
         android:layout_width="0in"
@@ -37,6 +37,6 @@
         android:gravity="right"
         android:textColor="#ee8888"
         android:text="23°"
-        android:textSize="@dimen/forecast_text_size" />
+        android:textSize="@dimen/forecast_text_size_land" />
 
 </LinearLayout>

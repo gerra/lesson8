@@ -1,13 +1,19 @@
 package ru.ifmo.md.lesson8.DataClasses;
 
 import android.content.ContentProvider;
+import android.content.ContentUris;
 import android.content.ContentValues;
 import android.content.Context;
 import android.content.UriMatcher;
 import android.database.Cursor;
+import android.database.SQLException;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
+import android.database.sqlite.SQLiteQueryBuilder;
 import android.net.Uri;
+import android.text.TextUtils;
+
+import java.util.HashMap;
 
 /**
  * Created by german on 29.11.14.
@@ -52,14 +58,23 @@ public class WeatherContentProvider extends ContentProvider {
 
     public static final String CUR_WEATHER_ID = "_id";
     public static final String CUR_WEATHER_ALL_ID = "all_id";
+    public static final String CUR_WEATHER_TIME = "time";
     public static final String CUR_WEATHER_CLOUDY = "cloudy";
     public static final String CUR_WEATHER_TEMP = "temp";
+    public static final String CUR_WEATHER_WIND = "wind";
+    public static final String CUR_WEATHER_HUMIDITY = "humidity";
+    public static final String CUR_WEATHER_PRESSURE = "pressure";
 
     private static final String CUR_WEATHER_TABLE_CREATE = "CREATE TABLE " + CUR_WEATHER_TABLE + " ("
             + CUR_WEATHER_ID + " INTEGER PRIMARY KEY AUTOINCREMENT, "
             + CUR_WEATHER_ALL_ID + " INTEGER, "
+            + CUR_WEATHER_TIME + " TEXT, "
             + CUR_WEATHER_CLOUDY + " TEXT, "
-            + CUR_WEATHER_TEMP + " INTEGER" + ");";
+            + CUR_WEATHER_TEMP + " INTEGER, "
+            + CUR_WEATHER_WIND + " TEXT, "
+            + CUR_WEATHER_HUMIDITY + " TEXT, "
+            + CUR_WEATHER_PRESSURE + " TEXT"
+            + ");";
     // Forecast weather table
     private static final String FORECAST_TABLE = "forecast";
 
@@ -116,6 +131,8 @@ public class WeatherContentProvider extends ContentProvider {
         uriMatcher.addURI(AUTHORITY, FORECAST_TABLE + "/#", 8);
     }
 
+    private static HashMap<String, String> PROJECTION_MAP;
+
     /**
      * Help class
      */
@@ -146,16 +163,55 @@ public class WeatherContentProvider extends ContentProvider {
 
     @Override
     public boolean onCreate() {
-        return false;
+        Context context = getContext();
+        DataBaseHelper dbHelper = new DataBaseHelper(context);
+        db = dbHelper.getWritableDatabase();
+        return (db == null) ? false : true;
     }
 
     @Override
     public Cursor query(Uri uri, String[] projection, String selection, String[] selectionArgs, String sortOrder) {
+        SQLiteQueryBuilder qb = new SQLiteQueryBuilder();
         switch (uriMatcher.match(uri)) {
-            case (uCITIES):
-                return 
+            case uCITIES:
+                qb.setTables(CITIES_TABLE);
+                qb.setProjectionMap(PROJECTION_MAP);
+                break;
+            case uCITIES_ID:
+                qb.setTables(CITIES_TABLE);
+                qb.appendWhere(CITY_ID + "=" + uri.getPathSegments().get(1));
+                break;
+            case uALL_WEATHER:
+                qb.setTables(ALL_WEATHER_TABLE);
+                qb.setProjectionMap(PROJECTION_MAP);
+                break;
+            case uALL_WEATHER_ID:
+                qb.setTables(ALL_WEATHER_TABLE);
+                qb.appendWhere(ALL_WEATHER_ID + "=" + uri.getPathSegments().get(1));
+                break;
+            case uCUR_WEATHER:
+                qb.setTables(CUR_WEATHER_TABLE);
+                qb.setProjectionMap(PROJECTION_MAP);
+                break;
+            case uCUR_WEATHER_ID:
+                qb.setTables(CUR_WEATHER_TABLE);
+                qb.appendWhere(CUR_WEATHER_ID + "=" + uri.getPathSegments().get(1));
+                break;
+            case uFORECAST:
+                qb.setTables(FORECAST_TABLE);
+                qb.setProjectionMap(PROJECTION_MAP);
+                break;
+            case uFORECAST_ID:
+                qb.setTables(FORECAST_TABLE);
+                qb.appendWhere(FORECAST_ID + "=" + uri.getPathSegments().get(1));
+                break;
+            default:
+                throw new IllegalArgumentException("Unknown URI " + uri);
         }
-        return null;
+        Cursor c = qb.query(db, projection, selection, selectionArgs,
+                null, null, sortOrder);
+        c.setNotificationUri(getContext().getContentResolver(), uri);
+        return c;
     }
 
     @Override
@@ -165,16 +221,135 @@ public class WeatherContentProvider extends ContentProvider {
 
     @Override
     public Uri insert(Uri uri, ContentValues values) {
-        return null;
+        switch (uriMatcher.match(uri)) {
+            case uCITIES:
+                long rowID = db.insert(CITIES_TABLE, null, values);
+                if (rowID > 0) {
+                    Uri _uri = ContentUris.withAppendedId(CITIES_CONTENT, rowID);
+                    getContext().getContentResolver().notifyChange(_uri, null);
+                    return _uri;
+                }
+                throw new SQLException("City inserting error: Failed insert values to " + uri);
+            case uALL_WEATHER:
+                rowID = db.insert(ALL_WEATHER_TABLE, null, values);
+                if (rowID > 0) {
+                    Uri _uri = ContentUris.withAppendedId(ALL_WEATHER_CONTENT, rowID);
+                    getContext().getContentResolver().notifyChange(_uri, null);
+                    return _uri;
+                }
+                throw new SQLException("Weather inserting error: Failed insert values to " + uri);
+            case uCUR_WEATHER:
+                rowID = db.insert(CUR_WEATHER_TABLE, null, values);
+                if (rowID > 0) {
+                    Uri _uri = ContentUris.withAppendedId(CUR_WEATHER_CONTENT, rowID);
+                    getContext().getContentResolver().notifyChange(_uri, null);
+                    return _uri;
+                }
+                throw new SQLException("Current weather inserting error: Failed insert values to " + uri);
+            case uFORECAST:
+                rowID = db.insert(FORECAST_TABLE, null, values);
+                if (rowID > 0) {
+                    Uri _uri = ContentUris.withAppendedId(FORECAST_CONTENT, rowID);
+                    getContext().getContentResolver().notifyChange(_uri, null);
+                    return _uri;
+                }
+                throw new SQLException("Forecast inserting error: Failed insert values to " + uri);
+            default:
+                throw new IllegalArgumentException("Unknown URI " + uri);
+        }
     }
 
     @Override
     public int delete(Uri uri, String selection, String[] selectionArgs) {
-        return 0;
+        int count = 0;
+        switch (uriMatcher.match(uri)) {
+            case uCITIES:
+                count = db.delete(CITIES_TABLE, selection, selectionArgs);
+                break;
+            case uCITIES_ID:
+                String id = uri.getPathSegments().get(1);
+                count = db.delete(CITIES_TABLE, CITY_ID + " = " + id
+                        + (TextUtils.isEmpty(selection) ? "" : " AND ( " + selection + ")"),
+                        selectionArgs);
+                break;
+            case uALL_WEATHER:
+                count = db.delete(ALL_WEATHER_TABLE, selection, selectionArgs);
+                break;
+            case uALL_WEATHER_ID:
+                id = uri.getPathSegments().get(1);
+                count = db.delete(ALL_WEATHER_TABLE, ALL_WEATHER_ID + " = " + id
+                        + (TextUtils.isEmpty(selection) ? "" : " AND ( " + selection + ")"),
+                        selectionArgs);
+                break;
+            case uCUR_WEATHER:
+                count = db.delete(CUR_WEATHER_TABLE, selection, selectionArgs);
+                break;
+            case uCUR_WEATHER_ID:
+                id = uri.getPathSegments().get(1);
+                count = db.delete(CUR_WEATHER_TABLE, CUR_WEATHER_ID + " = " + id
+                        + (TextUtils.isEmpty(selection) ? "" : " AND ( " + selection + ")"),
+                        selectionArgs);
+                break;
+            case uFORECAST:
+                count = db.delete(FORECAST_TABLE, selection, selectionArgs);
+                break;
+            case uFORECAST_ID:
+                id = uri.getPathSegments().get(1);
+                count = db.delete(FORECAST_TABLE, FORECAST_ID + " = " + id
+                        + (TextUtils.isEmpty(selection) ? "" : " AND ( " + selection + ")"),
+                        selectionArgs);
+                break;
+            default:
+                throw new IllegalArgumentException("Unknown URI " + uri);
+        }
+        getContext().getContentResolver().notifyChange(uri, null);
+        return count;
     }
 
     @Override
     public int update(Uri uri, ContentValues values, String selection, String[] selectionArgs) {
-        return 0;
+        int count = 0;
+        switch (uriMatcher.match(uri)) {
+            case uCITIES:
+                count = db.update(CITIES_TABLE, values, selection, selectionArgs);
+                break;
+            case uCITIES_ID:
+                String id = uri.getPathSegments().get(1);
+                count = db.update(CITIES_TABLE, values, CITY_ID + " = " + id
+                                + (TextUtils.isEmpty(selection) ? "" : " AND ( " + selection + ")"),
+                        selectionArgs);
+                break;
+            case uALL_WEATHER:
+                count = db.update(ALL_WEATHER_TABLE, values, selection, selectionArgs);
+                break;
+            case uALL_WEATHER_ID:
+                id = uri.getPathSegments().get(1);
+                count = db.update(ALL_WEATHER_TABLE, values, ALL_WEATHER_ID + " = " + id
+                                + (TextUtils.isEmpty(selection) ? "" : " AND ( " + selection + ")"),
+                        selectionArgs);
+                break;
+            case uCUR_WEATHER:
+                count = db.update(CUR_WEATHER_TABLE, values, selection, selectionArgs);
+                break;
+            case uCUR_WEATHER_ID:
+                id = uri.getPathSegments().get(1);
+                count = db.update(CUR_WEATHER_TABLE, values, CUR_WEATHER_ID + " = " + id
+                                + (TextUtils.isEmpty(selection) ? "" : " AND ( " + selection + ")"),
+                        selectionArgs);
+                break;
+            case uFORECAST:
+                count = db.update(FORECAST_TABLE, values, selection, selectionArgs);
+                break;
+            case uFORECAST_ID:
+                id = uri.getPathSegments().get(1);
+                count = db.update(FORECAST_TABLE, values, FORECAST_ID + " = " + id
+                                + (TextUtils.isEmpty(selection) ? "" : " AND ( " + selection + ")"),
+                        selectionArgs);
+                break;
+            default:
+                throw new IllegalArgumentException("Unknown URI " + uri);
+        }
+        getContext().getContentResolver().notifyChange(uri, null);
+        return count;
     }
 }

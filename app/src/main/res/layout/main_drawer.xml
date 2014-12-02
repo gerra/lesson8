@@ -7,16 +7,17 @@
     android:id="@+id/main_drawer">
 
     <FrameLayout
-        android:id="@+id/content"
+        android:id="@+id/weather_container"
         android:layout_width="match_parent"
         android:layout_height="match_parent">
-        <fragment
-            android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:id="@+id/fragment_weather"
-            android:layout_gravity="center"
-            android:name="ru.ifmo.md.lesson8.WeatherFragment"
-            tools:layout="@layout/fragment_weather" />
+        <!--<fragment-->
+            <!--android:layout_width="match_parent"-->
+            <!--android:layout_height="match_parent"-->
+            <!--android:id="@+id/fragment_weather"-->
+            <!--android:layout_gravity="center"-->
+            <!--android:tag="@string/weather_frag_tag"-->
+            <!--android:name="ru.ifmo.md.lesson8.WeatherFragment"-->
+            <!--tools:layout="@layout/fragment_weather" />-->
     </FrameLayout>
 
     <fragment
@@ -24,7 +25,7 @@
         android:layout_height="match_parent"
         android:id="@+id/fragment_cities_list"
         android:layout_gravity="start"
-        android:name="ru.ifmo.md.lesson8.DataClasses.CitiesListFragment"
+        android:name="ru.ifmo.md.lesson8.CitiesListFragment"
         tools:layout="@layout/fragment_cities_list" />
 
 </android.support.v4.widget.DrawerLayout>
