@@ -18,7 +18,7 @@ public class WeatherManager {
      *      -1 if city doesn't exist
      *      _id in CitiesTable of this city otherwise
      */
-    private static int getCityId(ContentResolver resolver, String city, String country) {
+    public static int getCityId(ContentResolver resolver, String city, String country) {
         Cursor c = resolver.query(
                 WeatherContentProvider.CITIES_CONTENT,
                 new String[]{
@@ -42,34 +42,6 @@ public class WeatherManager {
     }
 
     /**
-     * @return
-     *      -1 if pair (cityId, date) doesn't exist
-     *      _id in AllWeatherTable otherwise
-     */
-    public static int getAllWeatherId(ContentResolver resolver, int cityId, String date) {
-        Cursor c = resolver.query(
-                WeatherContentProvider.ALL_WEATHER_CONTENT,
-                new String[]{
-                        WeatherContentProvider.ALL_WEATHER_ID
-                },
-                WeatherContentProvider.ALL_WEATHER_CITY_ID + " = ? AND "
-                        + WeatherContentProvider.ALL_WEATHER_DATE + " = ? ",
-                new String[] {
-                        Integer.toString(cityId), date
-                },
-                null);
-        int allWeatherId;
-        if (c.getCount() == 0) {
-            allWeatherId = -1;
-        } else {
-            c.moveToFirst();
-            allWeatherId = c.getInt(c.getColumnIndexOrThrow(WeatherContentProvider.ALL_WEATHER_ID));
-        }
-        c.close();
-        return allWeatherId;
-    }
-
-    /**
      * @return _id of city in CitiesTable
      */
     public static int addCity(ContentResolver resolver, String city, String country) {
@@ -84,84 +56,20 @@ public class WeatherManager {
         return cityId;
     }
 
-    /**
-     * @return _id of weather in AllWeatherTable
-     */
-    private static int addAllWeather(ContentResolver resolver, int cityId, String date) {
-        int allWeatherId = getAllWeatherId(resolver, cityId, date);
-        if (allWeatherId == -1) {
-            ContentValues cv = new ContentValues();
-            cv.put(WeatherContentProvider.ALL_WEATHER_CITY_ID, cityId);
-            cv.put(WeatherContentProvider.ALL_WEATHER_DATE, date);
-            Uri uri = resolver.insert(WeatherContentProvider.ALL_WEATHER_CONTENT, cv);
-            allWeatherId = Integer.parseInt(uri.getLastPathSegment());
-        }
-        return allWeatherId;
-    }
-
     public static void setCurrentWeather(ContentResolver resolver, Weather weather) {
-        // Create values to insert
-        ContentValues curWeather = new ContentValues();
-        curWeather.put(WeatherContentProvider.CUR_WEATHER_CLOUDY, weather.cloudy);
-        curWeather.put(WeatherContentProvider.CUR_WEATHER_TEMP, weather.temp);
-        curWeather.put(WeatherContentProvider.CUR_WEATHER_TIME, weather.time);
-        curWeather.put(WeatherContentProvider.CUR_WEATHER_WIND, weather.wind);
-        curWeather.put(WeatherContentProvider.CUR_WEATHER_HUMIDITY, weather.humidity);
-        curWeather.put(WeatherContentProvider.CUR_WEATHER_PRESSURE, weather.pressure);
-
         deleteCurWeatherByCity(resolver, weather.city, weather.country);
-
         // Add city in CitiesTable
         int cityId = addCity(resolver, weather.city, weather.country);
-
-        // Add weather by cityId and date in AllWeatherTable
-        int allWeatherId = addAllWeather(resolver, cityId, weather.date);
-
-        // Insert or update curWeather in CurWeatherTable
-        curWeather.put(WeatherContentProvider.CUR_WEATHER_ALL_ID, allWeatherId);
-
-        // Check if weather was already added
-        Cursor c = resolver.query(
-                WeatherContentProvider.CUR_WEATHER_CONTENT,
-                new String[] {
-                        WeatherContentProvider.CUR_WEATHER_ID
-                },
-                WeatherContentProvider.CUR_WEATHER_ALL_ID + " = ? ",
-                new String[] {
-                        Integer.toString(allWeatherId)
-                },
-                null);
-        if (c.getCount() == 0) {
-            // It didn't
-            resolver.insert(WeatherContentProvider.CUR_WEATHER_CONTENT, curWeather);
-        } else {
-            // It did, update information
-            resolver.update(
-                    WeatherContentProvider.CUR_WEATHER_CONTENT,
-                    curWeather,
-                    WeatherContentProvider.CUR_WEATHER_ALL_ID + " = ? ",
-                    new String[] {
-                            Integer.toString(allWeatherId)
-                    }
-            );
-        }
+        // Create values to insert
+        ContentValues curWeather = weather.toCurWeatherContentValues(cityId);
+        Uri uri = resolver.insert(WeatherContentProvider.CUR_WEATHER_CONTENT, curWeather);
+        System.out.println("inserted curweather in " + weather.city + " " + weather.country + " " + uri);
     }
 
     public static void addForecast(ContentResolver resolver, Weather weather) {
-        ContentValues forecast = new ContentValues();
-        forecast.put(WeatherContentProvider.FORECAST_CLOUDY_AM, weather.cloudyAM);
-        forecast.put(WeatherContentProvider.FORECAST_CLOUDY_PM, weather.cloudyPM);
-        forecast.put(WeatherContentProvider.FORECAST_TEMP_LOW, weather.tempLow);
-        forecast.put(WeatherContentProvider.FORECAST_TEMP_HIGH, weather.tempHigh);
-
         // Add city in CitiesTable
         int cityId = addCity(resolver, weather.city, weather.country);
-
-        // Add weather by cityId and date in AllWeatherTable
-        int allWeatherId = addAllWeather(resolver, cityId, weather.date);
-
-        // Insert or update forecast in ForecastTable
-        forecast.put(WeatherContentProvider.FORECAST_ALL_ID, allWeatherId);
+        ContentValues forecast = weather.toForecastContentValues(cityId);
 
         // Check if forecast was already added
         Cursor c = resolver.query(
@@ -169,273 +77,82 @@ public class WeatherManager {
                 new String[] {
                         WeatherContentProvider.FORECAST_ID
                 },
-                WeatherContentProvider.FORECAST_ALL_ID + " = ? ",
+                WeatherContentProvider.FORECAST_CITY_ID + " = ? AND "
+                + WeatherContentProvider.FORECAST_DATE + " = ? ",
                 new String[] {
-                        Integer.toString(allWeatherId)
+                        Integer.toString(cityId),
+                        weather.date
                 },
                 null);
         if (c.getCount() == 0) {
             // It didn't
-            resolver.insert(WeatherContentProvider.FORECAST_CONTENT, forecast);
+            Uri uri = resolver.insert(WeatherContentProvider.FORECAST_CONTENT, forecast);
+            System.out.println("inserted forecast in " + weather.city + " " + weather.country + " " + uri);
         } else {
+            c.moveToFirst();
+            int forecastId = c.getInt(c.getColumnIndexOrThrow(WeatherContentProvider.FORECAST_ID));
             // It did, update information
-            resolver.update(
+            int updated = resolver.update(
                     WeatherContentProvider.FORECAST_CONTENT,
                     forecast,
-                    WeatherContentProvider.FORECAST_ALL_ID + " = ? ",
+                    WeatherContentProvider.FORECAST_ID + " = ? ",
                     new String[] {
-                            Integer.toString(allWeatherId)
+                            Integer.toString(forecastId)
                     }
             );
+            System.out.println("updated forecast in " + weather.city + " " + weather.country + " " + updated);
         }
-    }
-
-    public static String[] getCityAndCountryByWeatherId(ContentResolver resolver, int allId) {
-        Cursor c = resolver.query(
-                WeatherContentProvider.ALL_WEATHER_CONTENT,
-                new String[] {
-                        WeatherContentProvider.ALL_WEATHER_CITY_ID
-                },
-                WeatherContentProvider.ALL_WEATHER_ID + " = ? ",
-                new String[] {
-                        Integer.toString(allId)
-                }, null);
-        if (c.getCount() == 0) {
-            return null;
-        }
-        c.moveToFirst();
-        int cityId = c.getInt(c.getColumnIndexOrThrow(WeatherContentProvider.ALL_WEATHER_CITY_ID));
-        c.close();
-        c = resolver.query(
-                WeatherContentProvider.CITIES_CONTENT,
-                new String[] {
-                        WeatherContentProvider.CITY_NAME,
-                        WeatherContentProvider.COUNTRY_NAME
-                },
-                WeatherContentProvider.CITY_ID + " = ? ",
-                new String[] {
-                        Integer.toString(cityId)
-                }, null);
-        c.moveToFirst();
-        String[] res = new String[] {
-                c.getString(c.getColumnIndexOrThrow(WeatherContentProvider.CITY_NAME)),
-                c.getString(c.getColumnIndexOrThrow(WeatherContentProvider.COUNTRY_NAME))
-        };
-        c.close();
-        return res;
-    }
-
-    public static String getDateByWeatherId(ContentResolver resolver, int allId) {
-        Cursor c = resolver.query(
-                WeatherContentProvider.ALL_WEATHER_CONTENT,
-                new String[] {
-                        WeatherContentProvider.ALL_WEATHER_DATE
-                },
-                WeatherContentProvider.ALL_WEATHER_ID + " = ? ",
-                new String[] {
-                        Integer.toString(allId)
-                }, null);
-        if (c.getCount() == 0) {
-            return "";
-        }
-        c.moveToFirst();
-        String res = c.getString(c.getColumnIndexOrThrow(WeatherContentProvider.ALL_WEATHER_DATE));
-        c.close();
-        return res;
     }
 
     public static Cursor getForecastByCity(ContentResolver resolver, String city, String country) {
         if (city == null || country == null) {
             return null;
         }
-        Cursor cursor = resolver.query(
-                WeatherContentProvider.CITIES_CONTENT,
+        int cityId = getCityId(resolver, city, country);
+        Cursor c = resolver.query(
+                WeatherContentProvider.FORECAST_CONTENT,
+                null,
+                WeatherContentProvider.CUR_WEATHER_CITY_ID + " = ? ",
                 new String[] {
-                        WeatherContentProvider.CITY_ID
+                        String.valueOf(cityId)
                 },
-                WeatherContentProvider.CITY_NAME + " = ? AND " +
-                        WeatherContentProvider.COUNTRY_NAME + " = ? ",
-                new String[] {
-                        city, country
-                }, null
+                null
         );
-        int cnt = cursor.getCount();
-        if (cnt == 0) {
-            cursor.close();
-            return null;
-        } else {
-            String where = "";
-            String ids[] = new String[cnt];
-            cursor.moveToFirst();
-            for (int i = 0; i < cnt; i++) {
-                where += (i == 0 ?  "" : "OR ") + WeatherContentProvider.ALL_WEATHER_CITY_ID + " = ? ";
-                ids[i] = Integer.toString(
-                        cursor.getInt(cursor.getColumnIndexOrThrow(WeatherContentProvider.CITY_ID))
-                );
-                cursor.moveToNext();
-            }
-            cursor.close();
-            cursor = resolver.query(
-                    WeatherContentProvider.ALL_WEATHER_CONTENT,
-                    new String[] {
-                            WeatherContentProvider.ALL_WEATHER_ID
-                    },
-                    where, ids, null
-            );
-            cnt = cursor.getCount();
-            if (cnt == 0) {
-                return null;
-            } else {
-                where = "";
-                ids = new String[cnt];
-                cursor.moveToFirst();
-                for (int i = 0; i < cnt; i++) {
-                    where += (i == 0 ?  "" : "OR ") + WeatherContentProvider.FORECAST_ALL_ID + " = ? ";
-                    ids[i] = Integer.toString(
-                            cursor.getInt(cursor.getColumnIndexOrThrow(WeatherContentProvider.ALL_WEATHER_ID))
-                    );
-                    cursor.moveToNext();
-                }
-                cursor.close();
-                cursor = resolver.query(
-                        WeatherContentProvider.FORECAST_CONTENT,
-                        null,
-                        where, ids, null
-                );
-                return cursor;
-            }
-        }
+        System.out.println("got dorecast from " + city + " " + country + " " + c.getCount());
+        return c;
     }
 
     public static void deleteForecastByCity(ContentResolver resolver, String city, String country) {
         if (city == null || country == null) {
             return;
         }
-        Cursor cursor = resolver.query(
-                WeatherContentProvider.CITIES_CONTENT,
+        int cityId = getCityId(resolver, city, country);
+        int deleted = resolver.delete(
+                WeatherContentProvider.FORECAST_CONTENT,
+                WeatherContentProvider.FORECAST_CITY_ID + " = ? ",
                 new String[] {
-                        WeatherContentProvider.CITY_ID
-                },
-                WeatherContentProvider.CITY_NAME + " = ? AND " +
-                        WeatherContentProvider.COUNTRY_NAME + " = ? ",
-                new String[] {
-                        city, country
-                }, null
-        );
-        int cnt = cursor.getCount();
-        if (cnt == 0) {
-            cursor.close();
-            return;
-        } else {
-            String where = "";
-            String ids[] = new String[cnt];
-            cursor.moveToFirst();
-            for (int i = 0; i < cnt; i++) {
-                where += (i == 0 ?  "" : "OR ") + WeatherContentProvider.ALL_WEATHER_CITY_ID + " = ? ";
-                ids[i] = Integer.toString(
-                        cursor.getInt(cursor.getColumnIndexOrThrow(WeatherContentProvider.CITY_ID))
-                );
-                cursor.moveToNext();
-            }
-            cursor.close();
-            cursor = resolver.query(
-                    WeatherContentProvider.ALL_WEATHER_CONTENT,
-                    new String[] {
-                            WeatherContentProvider.ALL_WEATHER_ID
-                    },
-                    where, ids, null
-            );
-            cnt = cursor.getCount();
-            if (cnt == 0) {
-                return;
-            } else {
-                where = "";
-                ids = new String[cnt];
-                cursor.moveToFirst();
-                for (int i = 0; i < cnt; i++) {
-                    where += (i == 0 ?  "" : "OR ") + WeatherContentProvider.FORECAST_ALL_ID + " = ? ";
-                    ids[i] = Integer.toString(
-                            cursor.getInt(cursor.getColumnIndexOrThrow(WeatherContentProvider.ALL_WEATHER_ID))
-                    );
-                    cursor.moveToNext();
+                        String.valueOf(cityId)
                 }
-                cursor.close();
-                int deleted = resolver.delete(
-                        WeatherContentProvider.FORECAST_CONTENT,
-                        where, ids
-                );
-                System.out.println("Deleted " + deleted + " forecasts");
-            }
-        }
+        );
+        System.out.println("deleted dorecast from " + city + " " + country + " " + deleted);
     }
 
     public static void deleteCurWeatherByCity(ContentResolver resolver, String city, String country) {
         if (city == null || country == null) {
             return;
         }
-        Cursor cursor = resolver.query(
-                WeatherContentProvider.CITIES_CONTENT,
+        int cityId = getCityId(resolver, city, country);
+        int deleted = resolver.delete(
+                WeatherContentProvider.CUR_WEATHER_CONTENT,
+                WeatherContentProvider.CUR_WEATHER_CITY_ID + " = ? ",
                 new String[] {
-                        WeatherContentProvider.CITY_ID
-                },
-                WeatherContentProvider.CITY_NAME + " = ? AND " +
-                        WeatherContentProvider.COUNTRY_NAME + " = ? ",
-                new String[] {
-                        city, country
-                }, null
-        );
-        int cnt = cursor.getCount();
-        if (cnt == 0) {
-            cursor.close();
-            return;
-        } else {
-            String where = "";
-            String ids[] = new String[cnt];
-            cursor.moveToFirst();
-            for (int i = 0; i < cnt; i++) {
-                where += (i == 0 ?  "" : "OR ") + WeatherContentProvider.ALL_WEATHER_CITY_ID + " = ? ";
-                ids[i] = Integer.toString(
-                        cursor.getInt(cursor.getColumnIndexOrThrow(WeatherContentProvider.CITY_ID))
-                );
-                cursor.moveToNext();
-            }
-            cursor.close();
-            cursor = resolver.query(
-                    WeatherContentProvider.ALL_WEATHER_CONTENT,
-                    new String[] {
-                            WeatherContentProvider.ALL_WEATHER_ID
-                    },
-                    where, ids, null
-            );
-            cnt = cursor.getCount();
-            if (cnt == 0) {
-                return;
-            } else {
-                where = "";
-                ids = new String[cnt];
-                cursor.moveToFirst();
-                for (int i = 0; i < cnt; i++) {
-                    where += (i == 0 ?  "" : "OR ") + WeatherContentProvider.CUR_WEATHER_ALL_ID + " = ? ";
-                    ids[i] = Integer.toString(
-                            cursor.getInt(cursor.getColumnIndexOrThrow(WeatherContentProvider.ALL_WEATHER_ID))
-                    );
-                    cursor.moveToNext();
+                        String.valueOf(cityId)
                 }
-                cursor.close();
-                int deleted = resolver.delete(
-                        WeatherContentProvider.CUR_WEATHER_CONTENT,
-                        where, ids
-                );
-                System.out.println("deleted curweather from " + city + " " + country + " " + deleted);
-            }
-        }
+        );
+        System.out.println("deleted curweather from " + city + " " + country + " " + deleted);
     }
 
-    public static int getCloudyId(String text) {
-        if (text == null) {
-            return R.drawable.ic_launcher;
-        }
-        int code = Integer.parseInt(text);
+    public static int getCloudyId(int code) {
 //        13, 14, 15, 16 -- snow
 //        41, 42, 43, 46 -- snow_showers
 //        35, 6 -- rain_and_hail

@@ -42,24 +42,15 @@ public class WeatherContentProvider extends ContentProvider {
             + CITY_ID + " INTEGER PRIMARY KEY AUTOINCREMENT, "
             + CITY_NAME + " TEXT, "
             + COUNTRY_NAME + " TEXT" + ");";
-    // All weather table
-    private static final String ALL_WEATHER_TABLE = "all_weather";
 
-    public static final String ALL_WEATHER_ID = "_id";
-    public static final String ALL_WEATHER_CITY_ID = "city_id";
-    public static final String ALL_WEATHER_DATE = "date";
-
-    private static final String ALL_WEATHER_TABLE_CREATE = "CREATE TABLE " + ALL_WEATHER_TABLE + " ("
-            + ALL_WEATHER_ID + " INTEGER PRIMARY KEY AUTOINCREMENT, "
-            + ALL_WEATHER_CITY_ID + " INTEGER, "
-            + ALL_WEATHER_DATE + " TEXT" + ");";
     // Current weather table
     private static final String CUR_WEATHER_TABLE = "current_weather";
 
     public static final String CUR_WEATHER_ID = "_id";
-    public static final String CUR_WEATHER_ALL_ID = "all_id";
+    public static final String CUR_WEATHER_CITY_ID = "city_id";
+    public static final String CUR_WEATHER_DATE = "date";
     public static final String CUR_WEATHER_TIME = "time";
-    public static final String CUR_WEATHER_CLOUDY = "cloudy";
+    public static final String CUR_WEATHER_CODE = "code";
     public static final String CUR_WEATHER_TEMP = "temp";
     public static final String CUR_WEATHER_WIND = "wind";
     public static final String CUR_WEATHER_HUMIDITY = "humidity";
@@ -67,9 +58,10 @@ public class WeatherContentProvider extends ContentProvider {
 
     private static final String CUR_WEATHER_TABLE_CREATE = "CREATE TABLE " + CUR_WEATHER_TABLE + " ("
             + CUR_WEATHER_ID + " INTEGER PRIMARY KEY AUTOINCREMENT, "
-            + CUR_WEATHER_ALL_ID + " INTEGER, "
+            + CUR_WEATHER_CITY_ID + " INTEGER, "
+            + CUR_WEATHER_DATE + " TEXT, "
             + CUR_WEATHER_TIME + " TEXT, "
-            + CUR_WEATHER_CLOUDY + " TEXT, "
+            + CUR_WEATHER_CODE + " INTEGER, "
             + CUR_WEATHER_TEMP + " INTEGER, "
             + CUR_WEATHER_WIND + " TEXT, "
             + CUR_WEATHER_HUMIDITY + " TEXT, "
@@ -79,17 +71,17 @@ public class WeatherContentProvider extends ContentProvider {
     private static final String FORECAST_TABLE = "forecast";
 
     public static final String FORECAST_ID = "_id";
-    public static final String FORECAST_ALL_ID = "all_id";
-    public static final String FORECAST_CLOUDY_AM = "cloudy_am";
-    public static final String FORECAST_CLOUDY_PM = "cloudy_pm";
+    public static final String FORECAST_CITY_ID = "city_id";
+    public static final String FORECAST_DATE = "date";
+    public static final String FORECAST_CODE = "cloudy_pm";
     public static final String FORECAST_TEMP_LOW = "temp_low";
     public static final String FORECAST_TEMP_HIGH = "temp_high";
 
     private static final String FORECAST_TABLE_CREATE = "CREATE TABLE " + FORECAST_TABLE + " ("
             + FORECAST_ID + " INTEGER PRIMARY KEY AUTOINCREMENT, "
-            + FORECAST_ALL_ID + " INTEGER, "
-            + FORECAST_CLOUDY_AM + " TEXT, "
-            + FORECAST_CLOUDY_PM + " TEXT, "
+            + FORECAST_CITY_ID + " INTEGER, "
+            + FORECAST_DATE + " TEXT, "
+            + FORECAST_CODE + " INTEGER, "
             + FORECAST_TEMP_LOW + " INTEGER, "
             + FORECAST_TEMP_HIGH + " INTEGER" + ");";
     /**
@@ -100,8 +92,6 @@ public class WeatherContentProvider extends ContentProvider {
     public static final Uri DATA_CONTENT = Uri.parse("content://" + AUTHORITY);
     public static final Uri CITIES_CONTENT = Uri.parse("content://" + AUTHORITY +
             "/" + CITIES_TABLE);
-    public static final Uri ALL_WEATHER_CONTENT = Uri.parse("content://" + AUTHORITY +
-            "/" + ALL_WEATHER_TABLE);
     public static final Uri CUR_WEATHER_CONTENT = Uri.parse("content://" + AUTHORITY +
             "/" + CUR_WEATHER_TABLE);
     public static final Uri FORECAST_CONTENT = Uri.parse("content://" + AUTHORITY +
@@ -111,8 +101,6 @@ public class WeatherContentProvider extends ContentProvider {
     // constants for uri matching (u = uri)
     private static final int uCITIES = 1;
     private static final int uCITIES_ID = 2;
-    private static final int uALL_WEATHER = 3;
-    private static final int uALL_WEATHER_ID = 4;
     private static final int uCUR_WEATHER = 5;
     private static final int uCUR_WEATHER_ID = 6;
     private static final int uFORECAST = 7;
@@ -123,8 +111,6 @@ public class WeatherContentProvider extends ContentProvider {
         uriMatcher = new UriMatcher(UriMatcher.NO_MATCH);
         uriMatcher.addURI(AUTHORITY, CITIES_TABLE, 1);
         uriMatcher.addURI(AUTHORITY, CITIES_TABLE + "/#", 2);
-        uriMatcher.addURI(AUTHORITY, ALL_WEATHER_TABLE, 3);
-        uriMatcher.addURI(AUTHORITY, ALL_WEATHER_TABLE + "/#", 4);
         uriMatcher.addURI(AUTHORITY, CUR_WEATHER_TABLE, 5);
         uriMatcher.addURI(AUTHORITY, CUR_WEATHER_TABLE + "/#", 6);
         uriMatcher.addURI(AUTHORITY, FORECAST_TABLE, 7);
@@ -144,7 +130,6 @@ public class WeatherContentProvider extends ContentProvider {
         @Override
         public void onCreate(SQLiteDatabase db) {
             db.execSQL(CITIES_TABLE_CREATE);
-            db.execSQL(ALL_WEATHER_TABLE_CREATE);
             db.execSQL(CUR_WEATHER_TABLE_CREATE);
             db.execSQL(FORECAST_TABLE_CREATE);
         }
@@ -153,7 +138,6 @@ public class WeatherContentProvider extends ContentProvider {
         public void onUpgrade(SQLiteDatabase db, int oldVersion,
                               int newVersion) {
             db.execSQL("DROP TABLE IF EXISTS" + CITIES_TABLE);
-            db.execSQL("DROP TABLE IF EXISTS" + ALL_WEATHER_TABLE);
             db.execSQL("DROP TABLE IF EXISTS" + CUR_WEATHER_TABLE);
             db.execSQL("DROP TABLE IF EXISTS" + CUR_WEATHER_TABLE);
             db.execSQL("DROP TABLE IF EXISTS" + FORECAST_TABLE);
@@ -180,14 +164,6 @@ public class WeatherContentProvider extends ContentProvider {
             case uCITIES_ID:
                 qb.setTables(CITIES_TABLE);
                 qb.appendWhere(CITY_ID + "=" + uri.getPathSegments().get(1));
-                break;
-            case uALL_WEATHER:
-                qb.setTables(ALL_WEATHER_TABLE);
-                qb.setProjectionMap(PROJECTION_MAP);
-                break;
-            case uALL_WEATHER_ID:
-                qb.setTables(ALL_WEATHER_TABLE);
-                qb.appendWhere(ALL_WEATHER_ID + "=" + uri.getPathSegments().get(1));
                 break;
             case uCUR_WEATHER:
                 qb.setTables(CUR_WEATHER_TABLE);
@@ -230,14 +206,6 @@ public class WeatherContentProvider extends ContentProvider {
                     return _uri;
                 }
                 throw new SQLException("City inserting error: Failed insert values to " + uri);
-            case uALL_WEATHER:
-                rowID = db.insert(ALL_WEATHER_TABLE, null, values);
-                if (rowID > 0) {
-                    Uri _uri = ContentUris.withAppendedId(ALL_WEATHER_CONTENT, rowID);
-                    getContext().getContentResolver().notifyChange(_uri, null);
-                    return _uri;
-                }
-                throw new SQLException("Weather inserting error: Failed insert values to " + uri);
             case uCUR_WEATHER:
                 rowID = db.insert(CUR_WEATHER_TABLE, null, values);
                 if (rowID > 0) {
@@ -269,15 +237,6 @@ public class WeatherContentProvider extends ContentProvider {
             case uCITIES_ID:
                 String id = uri.getPathSegments().get(1);
                 count = db.delete(CITIES_TABLE, CITY_ID + " = " + id
-                        + (TextUtils.isEmpty(selection) ? "" : " AND ( " + selection + ")"),
-                        selectionArgs);
-                break;
-            case uALL_WEATHER:
-                count = db.delete(ALL_WEATHER_TABLE, selection, selectionArgs);
-                break;
-            case uALL_WEATHER_ID:
-                id = uri.getPathSegments().get(1);
-                count = db.delete(ALL_WEATHER_TABLE, ALL_WEATHER_ID + " = " + id
                         + (TextUtils.isEmpty(selection) ? "" : " AND ( " + selection + ")"),
                         selectionArgs);
                 break;
@@ -316,15 +275,6 @@ public class WeatherContentProvider extends ContentProvider {
             case uCITIES_ID:
                 String id = uri.getPathSegments().get(1);
                 count = db.update(CITIES_TABLE, values, CITY_ID + " = " + id
-                                + (TextUtils.isEmpty(selection) ? "" : " AND ( " + selection + ")"),
-                        selectionArgs);
-                break;
-            case uALL_WEATHER:
-                count = db.update(ALL_WEATHER_TABLE, values, selection, selectionArgs);
-                break;
-            case uALL_WEATHER_ID:
-                id = uri.getPathSegments().get(1);
-                count = db.update(ALL_WEATHER_TABLE, values, ALL_WEATHER_ID + " = " + id
                                 + (TextUtils.isEmpty(selection) ? "" : " AND ( " + selection + ")"),
                         selectionArgs);
                 break;

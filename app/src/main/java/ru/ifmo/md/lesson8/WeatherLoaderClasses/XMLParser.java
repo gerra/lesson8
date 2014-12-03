@@ -93,7 +93,7 @@ public class XMLParser extends DefaultHandler {
                 //Tue, 02 Dec 2014 2:53 am
                 String date = "??.??";
                 String time = "??:??";
-                String cloudy = "?";
+                int code = -1;
                 int temp = 0;
 
                 try {
@@ -131,13 +131,13 @@ public class XMLParser extends DefaultHandler {
                     temp = WeatherManager.toCelsius(temp);
                 }
                 // cloudy
-                cloudy = attributes.getValue("code");
+                code = Integer.parseInt(attributes.getValue("code"));
                 WeatherManager.setCurrentWeather(
                         context.getContentResolver(),
                         new Weather(
                                 city, country,
                                 date, time,
-                                cloudy, temp,
+                                code, temp,
                                 curWind, curHumidity, curPressure
                         ));
             }
@@ -149,8 +149,7 @@ public class XMLParser extends DefaultHandler {
             public void start(Attributes attributes) {
                 // 2 Dec 2014
                 String date = "??.??";
-                String cloudyAM = "AM ?";
-                String cloudyPM = "PM ?";
+                int code = -1;
                 int tempLow = 0;
                 int tempHigh = 0;
                 try {
@@ -176,15 +175,13 @@ public class XMLParser extends DefaultHandler {
                     tempHigh = WeatherManager.toCelsius(tempHigh);
                 }
                 // cloudy
-                String cloudy = attributes.getValue("code");
-                cloudyAM = cloudyPM = cloudy;
+                code = Integer.parseInt(attributes.getValue("code"));
 
                 WeatherManager.addForecast(
                         context.getContentResolver(),
                         new Weather(
                                 city, country, date,
-                                cloudyAM, cloudyPM,
-                                tempLow, tempHigh
+                                code, tempLow, tempHigh
                         )
                 );
             }

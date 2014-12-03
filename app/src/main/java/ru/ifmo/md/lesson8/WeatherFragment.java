@@ -27,6 +27,7 @@ public class WeatherFragment extends Fragment implements LoaderManager.LoaderCal
         MainActivity.CityChangedListener {
     private String curCity;
     private String curCountry;
+    private int cityId;
 
     private ListView forecastList;
     private ForecastAdapter adapter;
@@ -49,30 +50,26 @@ public class WeatherFragment extends Fragment implements LoaderManager.LoaderCal
     // "C" or "F"
     private String tempType = "C";
 
+    private void initLoaders() {
+        loaderManager = getLoaderManager();
+        loaderManager.initLoader(forecastLoaderID, null, this);
+        loaderManager.initLoader(curWeatherLoaderID, null, this);
+    }
+
+    private void restartLoaders() {
+        loaderManager.restartLoader(forecastLoaderID, null, this);
+        loaderManager.restartLoader(curWeatherLoaderID, null, this);
+    }
+
     private void updateCurWeather(Cursor cursor) {
         if (cursor.getCount() != 0) {
             System.out.println("ok " + cursor.getCount());
             cursor.moveToFirst();
-            boolean found = false;
-            while (cursor.isAfterLast() == false) {
-                String[] cityAndCountry = WeatherManager.getCityAndCountryByWeatherId(
-                        getActivity().getContentResolver(),
-                        cursor.getInt(cursor.getColumnIndexOrThrow(WeatherContentProvider.CUR_WEATHER_ALL_ID)));
-                if (cityAndCountry[0].equals(curCity) && cityAndCountry[1].equals(curCountry)) {
-                    found = true;
-                    break;
-                }
-                cursor.moveToNext();
-            }
-            // System.out.println("ok");
-            if (!found) {
-                return;
-            }
+
             int curTemp = cursor.getInt(cursor.getColumnIndexOrThrow(WeatherContentProvider.CUR_WEATHER_TEMP));
-            String curDate = WeatherManager.getDateByWeatherId(
-                    getActivity().getContentResolver(),
-                    cursor.getInt(cursor.getColumnIndexOrThrow(WeatherContentProvider.CUR_WEATHER_ALL_ID)));
+            String curDate = cursor.getString(cursor.getColumnIndexOrThrow(WeatherContentProvider.CUR_WEATHER_DATE));
             String curTime = cursor.getString(cursor.getColumnIndexOrThrow(WeatherContentProvider.CUR_WEATHER_TIME));
+            int curCode = cursor.getInt(cursor.getColumnIndexOrThrow(WeatherContentProvider.CUR_WEATHER_CODE));
             String curWind = cursor.getString(cursor.getColumnIndexOrThrow(WeatherContentProvider.CUR_WEATHER_WIND));
             String curHumidity = cursor.getString(cursor.getColumnIndexOrThrow(WeatherContentProvider.CUR_WEATHER_HUMIDITY));
             String curPressure = cursor.getString(cursor.getColumnIndexOrThrow(WeatherContentProvider.CUR_WEATHER_PRESSURE));
@@ -81,10 +78,8 @@ public class WeatherFragment extends Fragment implements LoaderManager.LoaderCal
             cwTimeView.setText(curTime);
             cwCityView.setText(curCity);
             cwCountryView.setText(curCountry);
-            cwTempView.setText(Integer.toString(curTemp) + "°" + tempType);
-            cwCloudyView.setImageResource(WeatherManager.getCloudyId(
-                    cursor.getString(cursor.getColumnIndexOrThrow(WeatherContentProvider.CUR_WEATHER_CLOUDY))
-            ));
+            cwTempView.setText(String.valueOf(curTemp) + "°" + tempType);
+            cwCloudyView.setImageResource(WeatherManager.getCloudyId(curCode));
             cwWindView.setText("Wind: " + curWind);
             cwHumidityView.setText("Humidity: " + curHumidity);
             cwPressureView.setText("Pressure: " + curPressure);
@@ -104,10 +99,6 @@ public class WeatherFragment extends Fragment implements LoaderManager.LoaderCal
     public void onActivityCreated(Bundle savedInstanceState) {
         super.onActivityCreated(savedInstanceState);
 
-        loaderManager = getLoaderManager();
-        loaderManager.initLoader(forecastLoaderID, null, this);
-        loaderManager.initLoader(curWeatherLoaderID, null, this);
-
         adapter = new ForecastAdapter(getActivity().getApplicationContext(), null, false);
         forecastList = (ListView) getView().findViewById(R.id.forecast_list);
         forecastList.setAdapter(adapter);
@@ -121,33 +112,41 @@ public class WeatherFragment extends Fragment implements LoaderManager.LoaderCal
         cwWindView = (TextView) getView().findViewById(R.id.cur_weather_wind);
         cwHumidityView = (TextView) getView().findViewById(R.id.cur_weather_humidity);
         cwPressureView = (TextView) getView().findViewById(R.id.cur_weather_pressure);
+
+        initLoaders();
     }
 
     @Override
     public Loader<Cursor> onCreateLoader(int id, Bundle args) {
-        String[] projection;
         Uri content;
-
+        String where;
+        String[] whereArgs;
         if (id == forecastLoaderID) {
             content = WeatherContentProvider.FORECAST_CONTENT;
+            where = WeatherContentProvider.FORECAST_CITY_ID + " = ? ";
+            whereArgs = new String[] {
+                    String.valueOf(cityId)
+            };
         } else /*if (id == curWeatherLoaderID)*/ {
             content = WeatherContentProvider.CUR_WEATHER_CONTENT;
+            where = WeatherContentProvider.CUR_WEATHER_CITY_ID + " = ? ";
+            whereArgs = new String[] {
+                    String.valueOf(cityId)
+            };
         }
 
         CursorLoader res = new CursorLoader(
                 getActivity().getApplicationContext(),
                 content,
-                null, null, null, null);
-        System.out.println("created");
+                null, where, whereArgs, null);
+        System.out.println("loader created");
         return res;
     }
 
     @Override
     public void onLoadFinished(Loader<Cursor> loader, Cursor data) {
         if (loader.getId() == forecastLoaderID) {
-            Cursor cursor = WeatherManager.getForecastByCity(
-                    getActivity().getContentResolver(), curCity, curCountry);
-            adapter.swapCursor(cursor);
+            adapter.swapCursor(data);
         } else /*if (getId() == curWeatherLoaderID) */{
             updateCurWeather(data);
         }
@@ -155,14 +154,20 @@ public class WeatherFragment extends Fragment implements LoaderManager.LoaderCal
 
     @Override
     public void onLoaderReset(Loader<Cursor> loader) {
-        adapter.swapCursor(null);
+        if (loader.getId() == forecastLoaderID) {
+            adapter.swapCursor(null);
+        }
         System.out.println("reset");
     }
 
     @Override
     public void changeCity(String city, String country) {
+        System.out.println("city changed to " + city + " " + country);
         curCity = city;
         curCountry = country;
+        cityId = WeatherManager.getCityId(getActivity().getContentResolver(), city, country);
+        restartLoaders();
+
         cwCityView.setText(curCity);
         cwCountryView.setText(curCountry);
         cwTempView.setText("");
@@ -173,15 +178,15 @@ public class WeatherFragment extends Fragment implements LoaderManager.LoaderCal
         cwPressureView.setText("");
         cwCloudyView.setImageDrawable(null);
 
-        Uri cc = WeatherContentProvider.CUR_WEATHER_CONTENT;
-        Cursor c = getActivity().getContentResolver().query(
-                cc,
-                null, null, null, null
-        );
-        updateCurWeather(c);
-        c.close();
-        adapter.swapCursor(WeatherManager.getForecastByCity(
-                getActivity().getContentResolver(), city, country
-        ));
+//        Uri cc = WeatherContentProvider.CUR_WEATHER_CONTENT;
+//        Cursor c = getActivity().getContentResolver().query(
+//                cc,
+//                null, null, null, null
+//        );
+//        updateCurWeather(c);
+//        c.close();
+//        adapter.swapCursor(WeatherManager.getForecastByCity(
+//                getActivity().getContentResolver(), city, country
+//        ));
     }
 }

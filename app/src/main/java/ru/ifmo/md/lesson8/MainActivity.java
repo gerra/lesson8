@@ -184,7 +184,7 @@ public class MainActivity extends ActionBarActivity
         }
         curCity = city;
         curCountry = country;
-        if (WeatherManager.getForecastByCity(getContentResolver(), city, country) == null) {
+        if (WeatherManager.getForecastByCity(getContentResolver(), city, country).getCount() == 0) {
             loadWeather();
         }
         if (mDrawer != null) {

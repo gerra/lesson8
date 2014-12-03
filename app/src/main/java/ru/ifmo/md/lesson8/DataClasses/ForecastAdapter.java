@@ -37,16 +37,13 @@ public class ForecastAdapter extends CursorAdapter {
             TextView fTempLowView = (TextView)view.findViewById(R.id.forecast_temp_low);
             TextView fTempHighView = (TextView)view.findViewById(R.id.forecast_temp_high);
 
-            String fDate = WeatherManager.getDateByWeatherId(
-                    context.getContentResolver(),
-                    cursor.getInt(cursor.getColumnIndexOrThrow(WeatherContentProvider.FORECAST_ALL_ID))
-            );
+            String fDate = cursor.getString(cursor.getColumnIndexOrThrow(WeatherContentProvider.FORECAST_DATE));
             String fTempLow = cursor.getString(cursor.getColumnIndexOrThrow(WeatherContentProvider.FORECAST_TEMP_LOW));
             String fTempHigh = cursor.getString(cursor.getColumnIndexOrThrow(WeatherContentProvider.FORECAST_TEMP_HIGH));
-            String fCloudy = cursor.getString(cursor.getColumnIndexOrThrow(WeatherContentProvider.FORECAST_CLOUDY_AM));
+            int fCode = cursor.getInt(cursor.getColumnIndexOrThrow(WeatherContentProvider.FORECAST_CODE));
 
             fDateView.setText(fDate);
-            fCloudyView.setImageResource(WeatherManager.getCloudyId(fCloudy));
+            fCloudyView.setImageResource(WeatherManager.getCloudyId(fCode));
             fTempLowView.setText(fTempLow);
             fTempHighView.setText(fTempHigh);
         }
