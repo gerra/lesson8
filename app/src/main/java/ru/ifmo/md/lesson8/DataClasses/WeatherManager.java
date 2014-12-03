@@ -109,6 +109,8 @@ public class WeatherManager {
         curWeather.put(WeatherContentProvider.CUR_WEATHER_HUMIDITY, weather.humidity);
         curWeather.put(WeatherContentProvider.CUR_WEATHER_PRESSURE, weather.pressure);
 
+        deleteCurWeatherByCity(resolver, weather.city, weather.country);
+
         // Add city in CitiesTable
         int cityId = addCity(resolver, weather.city, weather.country);
 
@@ -363,6 +365,68 @@ public class WeatherManager {
                         where, ids
                 );
                 System.out.println("Deleted " + deleted + " forecasts");
+            }
+        }
+    }
+
+    public static void deleteCurWeatherByCity(ContentResolver resolver, String city, String country) {
+        if (city == null || country == null) {
+            return;
+        }
+        Cursor cursor = resolver.query(
+                WeatherContentProvider.CITIES_CONTENT,
+                new String[] {
+                        WeatherContentProvider.CITY_ID
+                },
+                WeatherContentProvider.CITY_NAME + " = ? AND " +
+                        WeatherContentProvider.COUNTRY_NAME + " = ? ",
+                new String[] {
+                        city, country
+                }, null
+        );
+        int cnt = cursor.getCount();
+        if (cnt == 0) {
+            cursor.close();
+            return;
+        } else {
+            String where = "";
+            String ids[] = new String[cnt];
+            cursor.moveToFirst();
+            for (int i = 0; i < cnt; i++) {
+                where += (i == 0 ?  "" : "OR ") + WeatherContentProvider.ALL_WEATHER_CITY_ID + " = ? ";
+                ids[i] = Integer.toString(
+                        cursor.getInt(cursor.getColumnIndexOrThrow(WeatherContentProvider.CITY_ID))
+                );
+                cursor.moveToNext();
+            }
+            cursor.close();
+            cursor = resolver.query(
+                    WeatherContentProvider.ALL_WEATHER_CONTENT,
+                    new String[] {
+                            WeatherContentProvider.ALL_WEATHER_ID
+                    },
+                    where, ids, null
+            );
+            cnt = cursor.getCount();
+            if (cnt == 0) {
+                return;
+            } else {
+                where = "";
+                ids = new String[cnt];
+                cursor.moveToFirst();
+                for (int i = 0; i < cnt; i++) {
+                    where += (i == 0 ?  "" : "OR ") + WeatherContentProvider.CUR_WEATHER_ALL_ID + " = ? ";
+                    ids[i] = Integer.toString(
+                            cursor.getInt(cursor.getColumnIndexOrThrow(WeatherContentProvider.ALL_WEATHER_ID))
+                    );
+                    cursor.moveToNext();
+                }
+                cursor.close();
+                int deleted = resolver.delete(
+                        WeatherContentProvider.CUR_WEATHER_CONTENT,
+                        where, ids
+                );
+                System.out.println("deleted curweather from " + city + " " + country + " " + deleted);
             }
         }
     }
