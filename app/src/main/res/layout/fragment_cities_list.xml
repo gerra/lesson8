@@ -33,29 +33,6 @@
                 android:layout_marginRight="16dp"
                 android:visibility="gone"/>
         </FrameLayout>
-
-        <ImageButton
-            android:id="@android:id/button1"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_gravity="right"
-            android:layout_toLeftOf="@+id/frame_edit_city"
-            android:src="@android:drawable/btn_star_big_on"
-            android:background="#cccccc"
-            android:clickable="true" />
-
-        <!--<AutoCompleteTextView-->
-            <!--android:id="@+id/input_city"-->
-            <!--android:layout_width="match_parent"-->
-            <!--android:layout_height="wrap_content"-->
-            <!--android:hint="@string/hint"-->
-            <!--android:singleLine="true"
-            android:layout_weight="1"-->
-            <!--android:drawableLeft="@drawable/abc_ic_search_api_mtrl_alpha" />-->
-        <!--<ImageButton-->
-            <!--android:layout_width="wrap_content"-->
-            <!--android:layout_height="wrap_content"-->
-            <!--android:background="@android:drawable/ic_menu_add" />-->
     </LinearLayout>
     <ListView
         android:id="@+id/city_list"

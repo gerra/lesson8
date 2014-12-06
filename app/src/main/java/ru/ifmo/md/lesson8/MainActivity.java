@@ -1,5 +1,6 @@
 package ru.ifmo.md.lesson8;
 
+import android.app.Activity;
 import android.app.Fragment;
 import android.app.FragmentTransaction;
 import android.content.Intent;
@@ -13,6 +14,7 @@ import android.view.Gravity;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
+import android.view.inputmethod.InputMethodManager;
 
 import ru.ifmo.md.lesson8.DataClasses.City;
 import ru.ifmo.md.lesson8.DataClasses.WeatherContentProvider;
@@ -25,6 +27,11 @@ public class MainActivity extends ActionBarActivity
     ActionBarDrawerToggle mToggle;
 
     City curCity;
+
+    private void hideKeyboard() {
+        InputMethodManager inputMethodManager = (InputMethodManager) getSystemService(Activity.INPUT_METHOD_SERVICE);
+        inputMethodManager.hideSoftInputFromWindow(getCurrentFocus().getWindowToken(), 0);
+    }
 
     public final int mDrawerOpen = Gravity.START;
 
@@ -52,7 +59,6 @@ public class MainActivity extends ActionBarActivity
         }
         Intent intent = new Intent(this, WeatherLoader.class);
         intent.putExtra("woeid", curCity.getWoeid());
-//        stopService(intent);
         startService(intent);
     }
 
@@ -72,8 +78,8 @@ public class MainActivity extends ActionBarActivity
 //        WeatherManager.addCity(getContentResolver(), "Moscow", "Russia");
 //        WeatherManager.addCity(getContentResolver(), "Almaty", "Kazakhstan");
 
-        City spbCity = new City("St. Petersburg", "Russia", 2123260);
-        WeatherManager.addCity(getContentResolver(), spbCity, WeatherContentProvider.isImportant);
+//        City spbCity = new City("St. Petersburg", "Russia", 2123260);
+//        WeatherManager.addCity(getContentResolver(), spbCity, WeatherContentProvider.isImportant);
 //        WeatherManager.setImportant(getContentResolver(), "St. Petersburg", "Russia", WeatherContentProvider.isImportant);
 
         Fragment weatherFragment = getFragmentManager().findFragmentByTag("weather_frag");
@@ -139,7 +145,6 @@ public class MainActivity extends ActionBarActivity
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.main_drawer);
-
         mDrawer = (DrawerLayout)findViewById(R.id.main_drawer);
 
         if (mDrawer == null) {
@@ -183,6 +188,8 @@ public class MainActivity extends ActionBarActivity
         if (newCity == null) {
             return;
         }
+        hideKeyboard();
+
         curCity = newCity;
         if (WeatherManager.getCityId(getContentResolver(), newCity) == -1) {
             WeatherManager.addCity(getContentResolver(), newCity);

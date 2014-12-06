@@ -1,18 +1,23 @@
 package ru.ifmo.md.lesson8.CitiesLoaderClasses;
 
 import android.content.Context;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.BaseAdapter;
+import android.widget.Button;
 import android.widget.Filter;
 import android.widget.Filterable;
+import android.widget.ImageButton;
 import android.widget.TextView;
 
 import java.util.ArrayList;
 import java.util.List;
 
 import ru.ifmo.md.lesson8.DataClasses.City;
+import ru.ifmo.md.lesson8.DataClasses.WeatherContentProvider;
+import ru.ifmo.md.lesson8.DataClasses.WeatherManager;
 import ru.ifmo.md.lesson8.R;
 
 /**
@@ -43,23 +48,65 @@ public class CityAutoCompleteAdapter extends BaseAdapter implements Filterable {
     }
 
     @Override
-    public View getView(int position, View convertView, ViewGroup parent) {
+    public View getView(final int position, final View convertView, final ViewGroup parent) {
         View row = convertView;
-        TextView cityView;
-        TextView countryView;
+        final TextView cityView;
+        final TextView countryView;
+//        final Button importantButton;
+        final ImageButton importantButton;
         if (row == null) {
             LayoutInflater inflater = LayoutInflater.from(mContext);
             row = inflater.inflate(R.layout.simple_dropdown_item_2line, parent, false);
             cityView = (TextView) row.findViewById(android.R.id.text1);
             countryView = (TextView) row.findViewById(android.R.id.text2);
+//            importantButton = (Button) row.findViewById(R.id.add_to_important_button);
+            importantButton = (ImageButton) row.findViewById(R.id.add_to_important_button);
             row.setTag(5 << 25, cityView);
             row.setTag(5 << 25 + 1, countryView);
+            row.setTag(5 << 25 + 2, importantButton);
         } else {
             cityView = (TextView) row.getTag(5 << 25);
             countryView = (TextView) row.getTag(5 << 25 + 1);
+//            importantButton = (Button) row.getTag(5 << 25 + 2);
+            importantButton = (ImageButton) row.getTag(5 << 25 + 2);
         }
-        cityView.setText(getItem(position).getCityName());
-        countryView.setText(getItem(position).getCountryName());
+        final City curCity = getItem(position);
+        final int cityId = WeatherManager.getCityId(mContext.getContentResolver(), curCity);
+        final String importantly = WeatherManager.getImportantly(mContext.getContentResolver(), cityId);
+
+        cityView.setText(curCity.getCityName());
+        countryView.setText(curCity.getCountryName());
+        if (importantly.equals(WeatherContentProvider.isImportant)) {
+            importantButton.setImageResource(WeatherContentProvider.importantDrawable);
+//            importantButton.setBackgroundResource(WeatherContentProvider.importantDrawable);
+        } else {
+            importantButton.setImageResource(WeatherContentProvider.notImportantDrawable);
+//            importantButton.setBackgroundResource(WeatherContentProvider.notImportantDrawable);
+        }
+
+        importantButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                final int cityId = WeatherManager.getCityId(mContext.getContentResolver(), curCity);
+                final String importantly = WeatherManager.getImportantly(mContext.getContentResolver(), cityId);
+                Log.i("Item button clicked", " clicked " + getItem(position).toString() + "(id " + cityId + ") with importantly " + importantly);
+                if (cityId == -1) {
+                    WeatherManager.addCity(mContext.getContentResolver(), curCity, WeatherContentProvider.isImportant);
+                    importantButton.setImageResource(WeatherContentProvider.importantDrawable);
+//                    importantButton.setBackgroundResource(WeatherContentProvider.importantDrawable);
+                } else {
+                    if (importantly.equals(WeatherContentProvider.isImportant)) {
+                        WeatherManager.setImportantly(mContext.getContentResolver(), curCity, WeatherContentProvider.isNotImportant);
+                        importantButton.setImageResource(WeatherContentProvider.notImportantDrawable);
+//                        importantButton.setBackgroundResource(WeatherContentProvider.notImportantDrawable);
+                    } else {
+                        WeatherManager.setImportantly(mContext.getContentResolver(), curCity, WeatherContentProvider.isImportant);
+                        importantButton.setImageResource(WeatherContentProvider.importantDrawable);
+//                        importantButton.setBackgroundResource(WeatherContentProvider.importantDrawable);
+                    }
+                }
+            }
+        });
         return row;
     }
 

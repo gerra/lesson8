@@ -64,14 +64,14 @@
                 android:textSize="@dimen/last_upd_size"/>
             <TextView
                 android:id="@+id/cur_weather_date"
-                android:layout_width="wrap_content"
+                android:layout_width="match_parent"
                 android:layout_height="match_parent"
                 android:singleLine="true"
                 android:gravity="right"
                 android:textSize="@dimen/cur_date_size"/>
             <TextView
                 android:id="@+id/cur_weather_time"
-                android:layout_width="wrap_content"
+                android:layout_width="match_parent"
                 android:layout_height="match_parent"
                 android:lines="2"
                 android:textColor="#aaaaaa"

@@ -14,6 +14,7 @@ import ru.ifmo.md.lesson8.R;
 public class WeatherManager {
     private static String LogMessage = "Weather Manager";
 
+
     /**
      * @return
      *      -1 if city doesn't exist
@@ -46,22 +47,22 @@ public class WeatherManager {
     /**
      * @return _id of city in CitiesTable
      */
-    public static int addCity(ContentResolver resolver, City city, String important) {
-        assert(resolver != null && city != null && important != null);
-        assert(important.equals(WeatherContentProvider.isImportant)
-                || important.equals(WeatherContentProvider.isNotImportant));
+    public static int addCity(ContentResolver resolver, City city, String importantly) {
+        assert(resolver != null && city != null && importantly != null);
+        assert(importantly.equals(WeatherContentProvider.isImportant)
+                || importantly.equals(WeatherContentProvider.isNotImportant));
         int cityId = getCityId(resolver, city);
         if (cityId == -1) {
             ContentValues cv = new ContentValues();
             cv.put(WeatherContentProvider.CITY_NAME, city.getCityName());
             cv.put(WeatherContentProvider.COUNTRY_NAME, city.getCountryName());
             cv.put(WeatherContentProvider.WOEID, city.getWoeid());
-            cv.put(WeatherContentProvider.IS_IMPORTANT, important);
+            cv.put(WeatherContentProvider.IS_IMPORTANT, importantly);
             Uri uri = resolver.insert(WeatherContentProvider.CITIES_CONTENT, cv);
             cityId = Integer.parseInt(uri.getLastPathSegment());
             Log.i(LogMessage, "Inserted " + city.toString() + " in " + uri);
         }
-        Log.i(LogMessage, "Inserted id of " + city.toString() + " = " + cityId);
+        Log.i(LogMessage, "Inserted id of " + city.toString() + " with importantly " + importantly + " = " + cityId);
         return cityId;
     }
 
@@ -171,21 +172,21 @@ public class WeatherManager {
         Log.i(LogMessage, "deleted curweather from " + city.toString() + ", count = " + deleted);
     }
 
-    public static void setImportant(ContentResolver resolver, City city, String important) {
-        assert(resolver != null && city != null && important != null);
-        assert(important.equals(WeatherContentProvider.isImportant)
-                || important.equals(WeatherContentProvider.isNotImportant));
-        Log.i(LogMessage, "setting important ...");
+    public static void setImportantly(ContentResolver resolver, City city, String importantly) {
+        assert(resolver != null && city != null && importantly != null);
+        assert(importantly.equals(WeatherContentProvider.isImportant)
+                || importantly.equals(WeatherContentProvider.isNotImportant));
+        Log.i(LogMessage, "setting importantly of " + city.toString());
         int cityId = getCityId(resolver, city);
         if (cityId == -1) {
-            addCity(resolver, city, important);
+            addCity(resolver, city, importantly);
             return;
         }
         ContentValues cv = new ContentValues();
         cv.put(WeatherContentProvider.CITY_NAME, city.getCityName());
         cv.put(WeatherContentProvider.COUNTRY_NAME, city.getCountryName());
         cv.put(WeatherContentProvider.WOEID, city.getWoeid());
-        cv.put(WeatherContentProvider.IS_IMPORTANT, important);
+        cv.put(WeatherContentProvider.IS_IMPORTANT, importantly);
         int updated = resolver.update(
                 WeatherContentProvider.CITIES_CONTENT,
                 cv,
@@ -194,7 +195,53 @@ public class WeatherManager {
                         String.valueOf(cityId)
                 }
         );
-        Log.i(LogMessage, "Set important, updated: " + updated);
+        Log.i(LogMessage, "Set importantly to" + importantly + ", updated: " + updated);
+    }
+
+    public static String getImportantly(ContentResolver resolver, City city) {
+        Cursor c = resolver.query(
+                WeatherContentProvider.CITIES_CONTENT,
+                new String[] {
+                        WeatherContentProvider.IS_IMPORTANT
+                },
+                WeatherContentProvider.WOEID + " = ? ",
+                new String[] {
+                        String.valueOf(city.getWoeid())
+                },
+                null);
+        if (c.getCount() == 0) {
+            c.close();
+            return WeatherContentProvider.isNotImportant;
+        }
+        c.moveToFirst();
+        String res = c.getString(c.getColumnIndexOrThrow(WeatherContentProvider.IS_IMPORTANT));
+        c.close();
+        assert(res.equals(WeatherContentProvider.isImportant) || res.equals(WeatherContentProvider.isNotImportant));
+        Log.i(LogMessage, "Got importantly of " + city.toString() + " = " + res);
+        return res;
+    }
+
+    public static String getImportantly(ContentResolver resolver, int cityId) {
+        Cursor c = resolver.query(
+                WeatherContentProvider.CITIES_CONTENT,
+                new String[] {
+                        WeatherContentProvider.IS_IMPORTANT
+                },
+                WeatherContentProvider.CITY_ID + " = ? ",
+                new String[] {
+                        String.valueOf(cityId)
+                },
+                null);
+        if (c.getCount() == 0) {
+            c.close();
+            return WeatherContentProvider.isNotImportant;
+        }
+        c.moveToFirst();
+        String res = c.getString(c.getColumnIndexOrThrow(WeatherContentProvider.IS_IMPORTANT));
+        c.close();
+        assert(res.equals(WeatherContentProvider.isImportant) || res.equals(WeatherContentProvider.isNotImportant));
+        Log.i(LogMessage, "Got importantly of city with cityId" + cityId + " = " + res);
+        return res;
     }
 
     public static int getCloudyId(int code) {

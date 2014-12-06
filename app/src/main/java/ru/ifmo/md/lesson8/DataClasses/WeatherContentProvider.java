@@ -38,6 +38,8 @@ public class WeatherContentProvider extends ContentProvider {
 
     public static final String isImportant = "Y";
     public static final String isNotImportant = "N";
+    public static int importantDrawable = android.R.drawable.star_on;
+    public static int notImportantDrawable = android.R.drawable.star_off;
 
     private static final String CITIES_TABLE_CREATE = "CREATE TABLE " + CITIES_TABLE + " ("
             + CITY_ID + " INTEGER PRIMARY KEY AUTOINCREMENT, "

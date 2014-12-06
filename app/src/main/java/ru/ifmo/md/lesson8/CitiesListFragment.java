@@ -7,13 +7,16 @@ import android.content.CursorLoader;
 import android.content.Loader;
 import android.database.Cursor;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.inputmethod.InputMethodManager;
 import android.widget.AdapterView;
 import android.widget.ListView;
 import android.widget.ProgressBar;
 import android.widget.SimpleCursorAdapter;
+import android.widget.TextView;
 
 import ru.ifmo.md.lesson8.CitiesLoaderClasses.CityAutoCompleteAdapter;
 import ru.ifmo.md.lesson8.CitiesLoaderClasses.DelayAutoCompleteTextView;
@@ -58,6 +61,7 @@ public class CitiesListFragment extends Fragment implements LoaderManager.Loader
         editCity.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+                Log.d("Dropdown list item selected", "clicked " + position);
                 City curCity = (City) parent.getItemAtPosition(position);
                 editCity.setText(curCity.getCityName() + ", " + curCity.getCountryName());
                 myCallback.wasSelected(curCity);
@@ -98,6 +102,11 @@ public class CitiesListFragment extends Fragment implements LoaderManager.Loader
                 myCallback.wasSelected(new City(city, country, woeid));
             }
         });
+
+        TextView header = new TextView(getActivity().getApplicationContext());
+        header.setText("Favorites:");
+
+        citiesList.addHeaderView(header);
         getLoaderManager().initLoader(0, null, this);
     }
 
