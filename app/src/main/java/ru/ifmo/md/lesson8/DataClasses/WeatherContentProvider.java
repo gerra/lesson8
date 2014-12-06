@@ -24,10 +24,6 @@ public class WeatherContentProvider extends ContentProvider {
      */
     private SQLiteDatabase db;
 
-    public SQLiteDatabase getDB() {
-        return db;
-    }
-
     private static final String DB_NAME = "WeatherDB";
     private static final int DB_VERSION = 1;
 
@@ -37,11 +33,17 @@ public class WeatherContentProvider extends ContentProvider {
     public static final String CITY_ID = "_id";
     public static final String CITY_NAME = "city";
     public static final String COUNTRY_NAME = "country";
+    public static final String IS_IMPORTANT = "important";
+
+    public static final String isImportant = "Y";
+    public static final String isNotImportant = "N";
 
     private static final String CITIES_TABLE_CREATE = "CREATE TABLE " + CITIES_TABLE + " ("
             + CITY_ID + " INTEGER PRIMARY KEY AUTOINCREMENT, "
             + CITY_NAME + " TEXT, "
-            + COUNTRY_NAME + " TEXT" + ");";
+            + COUNTRY_NAME + " TEXT, "
+            + IS_IMPORTANT + " TEXT"
+            + ");";
 
     // Current weather table
     private static final String CUR_WEATHER_TABLE = "current_weather";
@@ -150,7 +152,7 @@ public class WeatherContentProvider extends ContentProvider {
         Context context = getContext();
         DataBaseHelper dbHelper = new DataBaseHelper(context);
         db = dbHelper.getWritableDatabase();
-        return (db == null) ? false : true;
+        return (db != null);
     }
 
     @Override
@@ -229,7 +231,7 @@ public class WeatherContentProvider extends ContentProvider {
 
     @Override
     public int delete(Uri uri, String selection, String[] selectionArgs) {
-        int count = 0;
+        int count;
         switch (uriMatcher.match(uri)) {
             case uCITIES:
                 count = db.delete(CITIES_TABLE, selection, selectionArgs);
@@ -267,7 +269,7 @@ public class WeatherContentProvider extends ContentProvider {
 
     @Override
     public int update(Uri uri, ContentValues values, String selection, String[] selectionArgs) {
-        int count = 0;
+        int count;
         switch (uriMatcher.match(uri)) {
             case uCITIES:
                 count = db.update(CITIES_TABLE, values, selection, selectionArgs);

@@ -1,10 +1,8 @@
 package ru.ifmo.md.lesson8.DataClasses;
 
-import android.content.ContentProvider;
 import android.content.ContentResolver;
 import android.content.ContentValues;
 import android.database.Cursor;
-import android.graphics.drawable.Drawable;
 import android.net.Uri;
 
 import ru.ifmo.md.lesson8.R;
@@ -44,12 +42,31 @@ public class WeatherManager {
     /**
      * @return _id of city in CitiesTable
      */
+    public static int addCity(ContentResolver resolver, String city, String country, String important) {
+        assert(important.equals(WeatherContentProvider.isImportant)
+                || important.equals(WeatherContentProvider.isNotImportant));
+        int cityId = getCityId(resolver, city, country);
+        if (cityId == -1) {
+            ContentValues cv = new ContentValues();
+            cv.put(WeatherContentProvider.CITY_NAME, city);
+            cv.put(WeatherContentProvider.COUNTRY_NAME, country);
+            cv.put(WeatherContentProvider.IS_IMPORTANT, important);
+            Uri uri = resolver.insert(WeatherContentProvider.CITIES_CONTENT, cv);
+            cityId = Integer.parseInt(uri.getLastPathSegment());
+        }
+        return cityId;
+    }
+
+    /**
+     * @return _id of city in CitiesTable
+     */
     public static int addCity(ContentResolver resolver, String city, String country) {
         int cityId = getCityId(resolver, city, country);
         if (cityId == -1) {
             ContentValues cv = new ContentValues();
             cv.put(WeatherContentProvider.CITY_NAME, city);
             cv.put(WeatherContentProvider.COUNTRY_NAME, country);
+            cv.put(WeatherContentProvider.IS_IMPORTANT, WeatherContentProvider.isNotImportant);
             Uri uri = resolver.insert(WeatherContentProvider.CITIES_CONTENT, cv);
             cityId = Integer.parseInt(uri.getLastPathSegment());
         }
@@ -118,7 +135,7 @@ public class WeatherManager {
                 },
                 null
         );
-        System.out.println("got dorecast from " + city + " " + country + " " + c.getCount());
+        System.out.println("got forecast from " + city + " " + country + " " + c.getCount());
         return c;
     }
 
@@ -150,6 +167,30 @@ public class WeatherManager {
                 }
         );
         System.out.println("deleted curweather from " + city + " " + country + " " + deleted);
+    }
+
+    public static void setImportant(ContentResolver resolver, String city, String country, String important) {
+        assert(important.equals(WeatherContentProvider.isImportant)
+                || important.equals(WeatherContentProvider.isNotImportant));
+        int cityId = getCityId(resolver, city, country);
+        if (cityId == -1) {
+            System.out.println("It's a new city");
+            addCity(resolver, city, country, important);
+            return;
+        }
+        ContentValues cv = new ContentValues();
+        cv.put(WeatherContentProvider.CITY_NAME, city);
+        cv.put(WeatherContentProvider.COUNTRY_NAME, country);
+        cv.put(WeatherContentProvider.IS_IMPORTANT, important);
+        int updated = resolver.update(
+                WeatherContentProvider.CITIES_CONTENT,
+                cv,
+                WeatherContentProvider.CITY_ID + " = ? ",
+                new String[] {
+                        String.valueOf(cityId)
+                }
+        );
+        System.out.println("Set important, udated: " + updated);
     }
 
     public static int getCloudyId(int code) {
@@ -217,7 +258,6 @@ public class WeatherManager {
     }
 
     public static int toCelsius(int fahrTemp) {
-        double dFahrTemp = (double) fahrTemp;
         double dCelsTemp = (fahrTemp - 32.0) / 1.8;
         return (int) dCelsTemp;
     }

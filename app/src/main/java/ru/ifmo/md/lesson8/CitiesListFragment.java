@@ -1,29 +1,28 @@
 package ru.ifmo.md.lesson8;
 
 import android.app.Activity;
+import android.app.Fragment;
 import android.app.LoaderManager;
 import android.content.CursorLoader;
 import android.content.Loader;
 import android.database.Cursor;
-import android.net.Uri;
 import android.os.Bundle;
-import android.app.Fragment;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.AdapterView;
 import android.widget.ListView;
+import android.widget.ProgressBar;
 import android.widget.SimpleCursorAdapter;
-import android.widget.TextView;
 
+import ru.ifmo.md.lesson8.CitiesLoaderClasses.CityAutoCompleteAdapter;
+import ru.ifmo.md.lesson8.CitiesLoaderClasses.DelayAutoCompleteTextView;
 import ru.ifmo.md.lesson8.DataClasses.WeatherContentProvider;
-import ru.ifmo.md.lesson8.R;
 
 
 public class CitiesListFragment extends Fragment implements LoaderManager.LoaderCallbacks<Cursor> {
     SimpleCursorAdapter adapter;
     ListView citiesList;
-
 
     /**
      * This interface is created for WeatherFragment, because
@@ -50,6 +49,19 @@ public class CitiesListFragment extends Fragment implements LoaderManager.Loader
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
         View view = inflater.inflate(R.layout.fragment_cities_list, container, false);
+        final DelayAutoCompleteTextView editCity = (DelayAutoCompleteTextView) view.findViewById(R.id.input_city);
+        CityAutoCompleteAdapter cityAdapter = new CityAutoCompleteAdapter(getActivity().getApplicationContext());
+        editCity.setAdapter(cityAdapter);
+        editCity.setThreshold(3);
+        editCity.setLoadingIndicator((ProgressBar) view.findViewById(R.id.city_progress_bar));
+        editCity.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+            @Override
+            public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+                String[] curCity = (String[]) parent.getItemAtPosition(position);
+                editCity.setText(curCity[0] + ", " + curCity[1]);
+                myCallback.wasSelected(curCity[0], curCity[1]);
+            }
+        });
         return view;
     }
 
@@ -71,7 +83,6 @@ public class CitiesListFragment extends Fragment implements LoaderManager.Loader
                 }, 0);
         citiesList.setAdapter(adapter);
 
-
         citiesList.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
@@ -91,7 +102,12 @@ public class CitiesListFragment extends Fragment implements LoaderManager.Loader
         return new CursorLoader(
                 getActivity().getApplicationContext(),
                 WeatherContentProvider.CITIES_CONTENT,
-                null, null, null, null);
+                null,
+                WeatherContentProvider.IS_IMPORTANT + " = ?",
+                new String[] {
+                        WeatherContentProvider.isImportant
+                },
+                null);
     }
 
     @Override

@@ -4,11 +4,10 @@ import android.app.Fragment;
 import android.app.LoaderManager;
 import android.content.CursorLoader;
 import android.content.Loader;
-import android.content.res.Configuration;
 import android.database.Cursor;
 import android.net.Uri;
 import android.os.Bundle;
-import android.support.annotation.Nullable;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -91,8 +90,7 @@ public class WeatherFragment extends Fragment implements LoaderManager.LoaderCal
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
-        View view = inflater.inflate(R.layout.fragment_weather, container, false);
-        return view;
+        return inflater.inflate(R.layout.fragment_weather, container, false);
     }
 
     @Override
@@ -166,7 +164,9 @@ public class WeatherFragment extends Fragment implements LoaderManager.LoaderCal
         curCity = city;
         curCountry = country;
         cityId = WeatherManager.getCityId(getActivity().getContentResolver(), city, country);
-        restartLoaders();
+
+        //System.out.println("City changed to " + city + " " + country + "")
+        Log.i("City changed", city + " " + country + " (id" + cityId + ")");
 
         cwCityView.setText(curCity);
         cwCountryView.setText(curCountry);
@@ -178,15 +178,6 @@ public class WeatherFragment extends Fragment implements LoaderManager.LoaderCal
         cwPressureView.setText("");
         cwCloudyView.setImageDrawable(null);
 
-//        Uri cc = WeatherContentProvider.CUR_WEATHER_CONTENT;
-//        Cursor c = getActivity().getContentResolver().query(
-//                cc,
-//                null, null, null, null
-//        );
-//        updateCurWeather(c);
-//        c.close();
-//        adapter.swapCursor(WeatherManager.getForecastByCity(
-//                getActivity().getContentResolver(), city, country
-//        ));
+        restartLoaders();
     }
 }

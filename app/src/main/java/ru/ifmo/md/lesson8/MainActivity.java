@@ -5,10 +5,7 @@ import android.app.FragmentTransaction;
 import android.content.Intent;
 import android.content.res.Configuration;
 import android.os.Bundle;
-
-import android.os.PersistableBundle;
 import android.support.v4.widget.DrawerLayout;
-
 import android.support.v7.app.ActionBarActivity;
 import android.support.v7.app.ActionBarDrawerToggle;
 import android.view.Gravity;
@@ -16,7 +13,7 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 
-import ru.ifmo.md.lesson8.DataClasses.Weather;
+import ru.ifmo.md.lesson8.DataClasses.WeatherContentProvider;
 import ru.ifmo.md.lesson8.DataClasses.WeatherManager;
 import ru.ifmo.md.lesson8.WeatherLoaderClasses.WeatherLoader;
 
@@ -73,6 +70,8 @@ public class MainActivity extends ActionBarActivity
         WeatherManager.addCity(getContentResolver(), "Moscow", "Russia");
         WeatherManager.addCity(getContentResolver(), "St. Petersburg", "Russia");
         WeatherManager.addCity(getContentResolver(), "Almaty", "Kazakhstan");
+
+        WeatherManager.setImportant(getContentResolver(), "St. Petersburg", "Russia", WeatherContentProvider.isImportant);
 
         Fragment weatherFragment = getFragmentManager().findFragmentByTag("weather_frag");
         try {
@@ -184,6 +183,9 @@ public class MainActivity extends ActionBarActivity
         }
         curCity = city;
         curCountry = country;
+        if (WeatherManager.getCityId(getContentResolver(), city, country) == -1) {
+            WeatherManager.addCity(getContentResolver(), curCity, curCountry);
+        }
         if (WeatherManager.getForecastByCity(getContentResolver(), city, country).getCount() == 0) {
             loadWeather();
         }
