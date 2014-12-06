@@ -26,13 +26,12 @@ public class WeatherLoader extends IntentService {
 
     @Override
     protected void onHandleIntent(Intent intent) {
-        String city = intent.getStringExtra("City");
-        String country = intent.getStringExtra("Country");
-        String cityForQuery = city + ", " + country;
+        int woeid = intent.getIntExtra("woeid", 0);
 
-        String request = new String("https://query.yahooapis.com/v1/public/yql?q=");
-        String select = new String("select * from weather.forecast where woeid in " +
-                "(select woeid from geo.places(1) where text=" + "\"" + cityForQuery + "\")");
+        String request = "https://query.yahooapis.com/v1/public/yql?q=";
+//        String select = new String("select * from weather.forecast where woeid in " +
+//                "(select woeid from geo.places(1) where text=" + "\"" + cityForQuery + "\")");
+        String select = "select * from weather.forecast where woeid = " + String.valueOf(woeid);
         try {
             request += URLEncoder.encode(select, "UTF-8");
         } catch (UnsupportedEncodingException e) {
@@ -50,7 +49,7 @@ public class WeatherLoader extends IntentService {
             int responseCode = httpConnection.getResponseCode();
             if (responseCode == HttpURLConnection.HTTP_OK) {
                 InputStream in = httpConnection.getInputStream();
-                XMLParser parser = new XMLParser(getApplicationContext());
+                XMLParser parser = new XMLParser(getApplicationContext(), woeid);
                 parser.parse(in);
             }
         } catch (MalformedURLException e) {

@@ -34,6 +34,7 @@ public class WeatherContentProvider extends ContentProvider {
     public static final String CITY_NAME = "city";
     public static final String COUNTRY_NAME = "country";
     public static final String IS_IMPORTANT = "important";
+    public static final String WOEID = "woeid";
 
     public static final String isImportant = "Y";
     public static final String isNotImportant = "N";
@@ -42,6 +43,7 @@ public class WeatherContentProvider extends ContentProvider {
             + CITY_ID + " INTEGER PRIMARY KEY AUTOINCREMENT, "
             + CITY_NAME + " TEXT, "
             + COUNTRY_NAME + " TEXT, "
+            + WOEID + " INTEGER, "
             + IS_IMPORTANT + " TEXT"
             + ");";
 

@@ -12,6 +12,7 @@ import android.widget.TextView;
 import java.util.ArrayList;
 import java.util.List;
 
+import ru.ifmo.md.lesson8.DataClasses.City;
 import ru.ifmo.md.lesson8.R;
 
 /**
@@ -19,7 +20,7 @@ import ru.ifmo.md.lesson8.R;
  */
 public class CityAutoCompleteAdapter extends BaseAdapter implements Filterable {
     private final Context mContext;
-    private List<String[]> mResults;
+    private List<City> mResults;
 
     public CityAutoCompleteAdapter(Context context) {
         mContext = context;
@@ -32,7 +33,7 @@ public class CityAutoCompleteAdapter extends BaseAdapter implements Filterable {
     }
 
     @Override
-    public String[] getItem(int position) {
+    public City getItem(int position) {
         return mResults.get(position);
     }
 
@@ -52,13 +53,13 @@ public class CityAutoCompleteAdapter extends BaseAdapter implements Filterable {
             cityView = (TextView) row.findViewById(android.R.id.text1);
             countryView = (TextView) row.findViewById(android.R.id.text2);
             row.setTag(5 << 25, cityView);
-            row.setTag(6 << 25, countryView);
+            row.setTag(5 << 25 + 1, countryView);
         } else {
             cityView = (TextView) row.getTag(5 << 25);
-            countryView = (TextView) row.getTag(6 << 25);
+            countryView = (TextView) row.getTag(5 << 25 + 1);
         }
-        cityView.setText(getItem(position)[0]);
-        countryView.setText(getItem(position)[1]);
+        cityView.setText(getItem(position).getCityName());
+        countryView.setText(getItem(position).getCountryName());
         return row;
     }
 
@@ -69,7 +70,7 @@ public class CityAutoCompleteAdapter extends BaseAdapter implements Filterable {
             protected FilterResults performFiltering(CharSequence constraint) {
                 FilterResults filterResults = new FilterResults();
                 if (constraint != null) {
-                    List<String[]> cities = findCities(constraint.toString());
+                    List<City> cities = findCities(constraint.toString());
                     // Assign the data to the FilterResults
                     filterResults.values = cities;
                     filterResults.count = cities.size();
@@ -80,7 +81,7 @@ public class CityAutoCompleteAdapter extends BaseAdapter implements Filterable {
             @Override
             protected void publishResults(CharSequence constraint, FilterResults results) {
                 if (results != null && results.count > 0) {
-                    mResults = (List<String[]>) results.values;
+                    mResults = (List<City>) results.values;
                     notifyDataSetChanged();
                 } else {
                     notifyDataSetInvalidated();
@@ -89,7 +90,7 @@ public class CityAutoCompleteAdapter extends BaseAdapter implements Filterable {
         };
     }
 
-    private List<String[]> findCities(String city) {
-        return CitiesLoader.getCities(city);
+    private List<City> findCities(String pattern) {
+        return CitiesLoader.getCities(pattern);
     }
 }

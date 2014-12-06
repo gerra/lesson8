@@ -1,8 +1,6 @@
 package ru.ifmo.md.lesson8.WeatherLoaderClasses;
 
 import android.content.Context;
-import android.content.res.Configuration;
-import android.graphics.drawable.GradientDrawable;
 import android.sax.Element;
 import android.sax.RootElement;
 import android.sax.StartElementListener;
@@ -20,6 +18,7 @@ import java.util.Calendar;
 import java.util.Date;
 import java.util.Locale;
 
+import ru.ifmo.md.lesson8.DataClasses.City;
 import ru.ifmo.md.lesson8.DataClasses.Weather;
 import ru.ifmo.md.lesson8.DataClasses.WeatherManager;
 
@@ -30,14 +29,15 @@ public class XMLParser extends DefaultHandler {
     private static String namespace = "http://xml.weather.yahoo.com/ns/rss/1.0";
     private static Locale locale = Locale.US;
 
-    Context context;
+    private final Context context;
+    private final int woeid;
 
-    public XMLParser(Context context) {
+    public XMLParser(Context context, int woeid) {
         this.context = context;
+        this.woeid = woeid;
     }
 
-    private String city;
-    private String country;
+    private City city;
     private boolean isFahrenheit;
 
     private String curWind="";
@@ -79,9 +79,8 @@ public class XMLParser extends DefaultHandler {
         location.setStartElementListener(new StartElementListener() {
             @Override
             public void start(Attributes attributes) {
-                city = attributes.getValue("city");
-                country = attributes.getValue("country");
-                WeatherManager.deleteForecastByCity(context.getContentResolver(), city, country);
+                city = new City(attributes.getValue("city"), attributes.getValue("country"), woeid);
+                WeatherManager.deleteForecastByCity(context.getContentResolver(), city);
             }
         });
 
@@ -135,7 +134,7 @@ public class XMLParser extends DefaultHandler {
                 WeatherManager.setCurrentWeather(
                         context.getContentResolver(),
                         new Weather(
-                                city, country,
+                                city,
                                 date, time,
                                 code, temp,
                                 curWind, curHumidity, curPressure
@@ -180,7 +179,7 @@ public class XMLParser extends DefaultHandler {
                 WeatherManager.addForecast(
                         context.getContentResolver(),
                         new Weather(
-                                city, country, date,
+                                city, date,
                                 code, tempLow, tempHigh
                         )
                 );

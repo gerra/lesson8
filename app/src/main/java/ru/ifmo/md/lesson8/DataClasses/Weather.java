@@ -1,14 +1,12 @@
 package ru.ifmo.md.lesson8.DataClasses;
 
-import android.content.ContentResolver;
 import android.content.ContentValues;
 
 /**
  * Created by german on 29.11.14.
  */
 public class Weather {
-    public final String city;
-    public final String country;
+    public final City city;
     public final String date;
     public final int code;
     // only current
@@ -24,10 +22,9 @@ public class Weather {
     private boolean isInit = false;
 
     // current weather constructor
-    public Weather(String city, String country, String date, String time, int code, int temp,
+    public Weather(City city, String date, String time, int code, int temp,
                    String wind, String humidity, String pressure) {
         this.city = city;
-        this.country = country;
         this.date = date;
         this.time = time;
         this.code = code;
@@ -43,10 +40,9 @@ public class Weather {
     }
 
     // forecast constructor
-    public Weather(String city, String country, String date, int code,
+    public Weather(City city, String date, int code,
             int tempLow, int tempHigh) {
         this.city = city;
-        this.country = country;
         this.date = date;
         this.code = code;
         this.tempLow = tempLow;

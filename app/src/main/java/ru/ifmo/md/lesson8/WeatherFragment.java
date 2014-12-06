@@ -15,6 +15,7 @@ import android.widget.ImageView;
 import android.widget.ListView;
 import android.widget.TextView;
 
+import ru.ifmo.md.lesson8.DataClasses.City;
 import ru.ifmo.md.lesson8.DataClasses.ForecastAdapter;
 import ru.ifmo.md.lesson8.DataClasses.WeatherContentProvider;
 import ru.ifmo.md.lesson8.DataClasses.WeatherManager;
@@ -24,8 +25,9 @@ import ru.ifmo.md.lesson8.DataClasses.WeatherManager;
  */
 public class WeatherFragment extends Fragment implements LoaderManager.LoaderCallbacks<Cursor>,
         MainActivity.CityChangedListener {
-    private String curCity;
-    private String curCountry;
+
+    private City curCity;
+
     private int cityId;
 
     private ListView forecastList;
@@ -61,7 +63,7 @@ public class WeatherFragment extends Fragment implements LoaderManager.LoaderCal
     }
 
     private void updateCurWeather(Cursor cursor) {
-        if (cursor.getCount() != 0) {
+        if (cursor.getCount() != 0 && curCity != null) {
             System.out.println("ok " + cursor.getCount());
             cursor.moveToFirst();
 
@@ -75,8 +77,8 @@ public class WeatherFragment extends Fragment implements LoaderManager.LoaderCal
 
             cwDateView.setText(curDate);
             cwTimeView.setText(curTime);
-            cwCityView.setText(curCity);
-            cwCountryView.setText(curCountry);
+            cwCityView.setText(curCity.getCityName());
+            cwCountryView.setText(curCity.getCountryName());
             cwTempView.setText(String.valueOf(curTemp) + "°" + tempType);
             cwCloudyView.setImageResource(WeatherManager.getCloudyId(curCode));
             cwWindView.setText("Wind: " + curWind);
@@ -159,17 +161,14 @@ public class WeatherFragment extends Fragment implements LoaderManager.LoaderCal
     }
 
     @Override
-    public void changeCity(String city, String country) {
-        System.out.println("city changed to " + city + " " + country);
-        curCity = city;
-        curCountry = country;
-        cityId = WeatherManager.getCityId(getActivity().getContentResolver(), city, country);
+    public void changeCity(City newCity) {
+        curCity = newCity;
+        cityId = WeatherManager.getCityId(getActivity().getContentResolver(), curCity);
 
-        //System.out.println("City changed to " + city + " " + country + "")
-        Log.i("City changed", city + " " + country + " (id" + cityId + ")");
+        Log.i("City changed", curCity.toString() + " (id" + cityId + ")");
 
-        cwCityView.setText(curCity);
-        cwCountryView.setText(curCountry);
+        cwCityView.setText(curCity.getCityName());
+        cwCountryView.setText(curCity.getCountryName());
         cwTempView.setText("");
         cwDateView.setText("");
         cwTimeView.setText("");

@@ -8,11 +8,13 @@ import android.os.Bundle;
 import android.support.v4.widget.DrawerLayout;
 import android.support.v7.app.ActionBarActivity;
 import android.support.v7.app.ActionBarDrawerToggle;
+import android.util.Log;
 import android.view.Gravity;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 
+import ru.ifmo.md.lesson8.DataClasses.City;
 import ru.ifmo.md.lesson8.DataClasses.WeatherContentProvider;
 import ru.ifmo.md.lesson8.DataClasses.WeatherManager;
 import ru.ifmo.md.lesson8.WeatherLoaderClasses.WeatherLoader;
@@ -22,35 +24,35 @@ public class MainActivity extends ActionBarActivity
     DrawerLayout mDrawer;
     ActionBarDrawerToggle mToggle;
 
-    String curCity;
-    String curCountry;
+    City curCity;
 
     public final int mDrawerOpen = Gravity.START;
 
     public interface CityChangedListener {
-        void changeCity(String city, String country);
+        void changeCity(City newCity);
     }
 
     @Override
     public Object onRetainCustomNonConfigurationInstance() {
-        if (curCity == null && curCountry == null) {
+        if (curCity == null) {
             return null;
         }
         Bundle bundle = new Bundle();
-        bundle.putString("city", curCity);
-        bundle.putString("country", curCountry);
+        bundle.putString("city", curCity.getCityName());
+        bundle.putString("country", curCity.getCountryName());
+        bundle.putInt("woeid", curCity.getWoeid());
         return bundle;
     }
 
     CityChangedListener myCallback;
 
     public void loadWeather() {
-        if (curCity == null || curCountry == null) {
+        if (curCity == null) {
             return;
         }
         Intent intent = new Intent(this, WeatherLoader.class);
-        intent.putExtra("City", curCity);
-        intent.putExtra("Country", curCountry);
+        intent.putExtra("woeid", curCity.getWoeid());
+//        stopService(intent);
         startService(intent);
     }
 
@@ -67,17 +69,18 @@ public class MainActivity extends ActionBarActivity
             mToggle.syncState();
         }
 
-        WeatherManager.addCity(getContentResolver(), "Moscow", "Russia");
-        WeatherManager.addCity(getContentResolver(), "St. Petersburg", "Russia");
-        WeatherManager.addCity(getContentResolver(), "Almaty", "Kazakhstan");
+//        WeatherManager.addCity(getContentResolver(), "Moscow", "Russia");
+//        WeatherManager.addCity(getContentResolver(), "Almaty", "Kazakhstan");
 
-        WeatherManager.setImportant(getContentResolver(), "St. Petersburg", "Russia", WeatherContentProvider.isImportant);
+        City spbCity = new City("St. Petersburg", "Russia", 2123260);
+        WeatherManager.addCity(getContentResolver(), spbCity, WeatherContentProvider.isImportant);
+//        WeatherManager.setImportant(getContentResolver(), "St. Petersburg", "Russia", WeatherContentProvider.isImportant);
 
         Fragment weatherFragment = getFragmentManager().findFragmentByTag("weather_frag");
         try {
             myCallback = (CityChangedListener) weatherFragment;
             if (myCallback == null) {
-                System.out.println("Bad");
+                Log.i("Creating callback", "Weather fragment wasn't created");
             }
         } catch (ClassCastException e) {
             throw new ClassCastException(weatherFragment.toString()
@@ -90,9 +93,8 @@ public class MainActivity extends ActionBarActivity
                 mDrawer.openDrawer(mDrawerOpen);
             }
         } else {
-            curCity = bundle.getString("city");
-            curCountry = bundle.getString("country");
-            wasSelected(curCity, curCountry);
+            curCity = new City(bundle.getString("city"), bundle.getString("country"), bundle.getInt("woeid"));
+            wasSelected(curCity);
         }
     }
 
@@ -117,7 +119,7 @@ public class MainActivity extends ActionBarActivity
             }
         }
         if (item.getItemId() == R.id.action_refresh) {
-            if (curCity == null || curCountry == null) {
+            if (curCity == null) {
                 if (mDrawer != null) {
                     mDrawer.openDrawer(mDrawerOpen);
                 }
@@ -177,21 +179,20 @@ public class MainActivity extends ActionBarActivity
     }
 
     @Override
-    public void wasSelected(String city, String country) {
-        if (city == null || country == null) {
+    public void wasSelected(City newCity) {
+        if (newCity == null) {
             return;
         }
-        curCity = city;
-        curCountry = country;
-        if (WeatherManager.getCityId(getContentResolver(), city, country) == -1) {
-            WeatherManager.addCity(getContentResolver(), curCity, curCountry);
+        curCity = newCity;
+        if (WeatherManager.getCityId(getContentResolver(), newCity) == -1) {
+            WeatherManager.addCity(getContentResolver(), newCity);
         }
-        if (WeatherManager.getForecastByCity(getContentResolver(), city, country).getCount() == 0) {
+        if (WeatherManager.getForecastByCity(getContentResolver(), newCity).getCount() == 0) {
             loadWeather();
         }
         if (mDrawer != null) {
             mDrawer.closeDrawers();
         }
-        myCallback.changeCity(curCity, curCountry);
+        myCallback.changeCity(curCity);
     }
 }

@@ -4,6 +4,7 @@ import android.content.ContentResolver;
 import android.content.ContentValues;
 import android.database.Cursor;
 import android.net.Uri;
+import android.util.Log;
 
 import ru.ifmo.md.lesson8.R;
 
@@ -11,21 +12,23 @@ import ru.ifmo.md.lesson8.R;
  * Created by german on 30.11.14.
  */
 public class WeatherManager {
+    private static String LogMessage = "Weather Manager";
+
     /**
      * @return
      *      -1 if city doesn't exist
      *      _id in CitiesTable of this city otherwise
      */
-    public static int getCityId(ContentResolver resolver, String city, String country) {
+    public static int getCityId(ContentResolver resolver, City city) {
+        assert(resolver != null && city != null);
         Cursor c = resolver.query(
                 WeatherContentProvider.CITIES_CONTENT,
                 new String[]{
                         WeatherContentProvider.CITY_ID
                 },
-                WeatherContentProvider.CITY_NAME + " = ? AND "
-                        + WeatherContentProvider.COUNTRY_NAME + " = ? ",
+                WeatherContentProvider.WOEID + " = ? ",
                 new String[]{
-                        city, country
+                        String.valueOf(city.getWoeid())
                 },
                 null);
         int cityId;
@@ -36,56 +39,54 @@ public class WeatherManager {
             cityId = c.getInt(c.getColumnIndexOrThrow(WeatherContentProvider.CITY_ID));
         }
         c.close();
+        Log.i(LogMessage, "got id of " + city.toString() + " = " + cityId);
         return cityId;
     }
 
     /**
      * @return _id of city in CitiesTable
      */
-    public static int addCity(ContentResolver resolver, String city, String country, String important) {
+    public static int addCity(ContentResolver resolver, City city, String important) {
+        assert(resolver != null && city != null && important != null);
         assert(important.equals(WeatherContentProvider.isImportant)
                 || important.equals(WeatherContentProvider.isNotImportant));
-        int cityId = getCityId(resolver, city, country);
+        int cityId = getCityId(resolver, city);
         if (cityId == -1) {
             ContentValues cv = new ContentValues();
-            cv.put(WeatherContentProvider.CITY_NAME, city);
-            cv.put(WeatherContentProvider.COUNTRY_NAME, country);
+            cv.put(WeatherContentProvider.CITY_NAME, city.getCityName());
+            cv.put(WeatherContentProvider.COUNTRY_NAME, city.getCountryName());
+            cv.put(WeatherContentProvider.WOEID, city.getWoeid());
             cv.put(WeatherContentProvider.IS_IMPORTANT, important);
             Uri uri = resolver.insert(WeatherContentProvider.CITIES_CONTENT, cv);
             cityId = Integer.parseInt(uri.getLastPathSegment());
+            Log.i(LogMessage, "Inserted " + city.toString() + " in " + uri);
         }
+        Log.i(LogMessage, "Inserted id of " + city.toString() + " = " + cityId);
         return cityId;
     }
 
     /**
      * @return _id of city in CitiesTable
      */
-    public static int addCity(ContentResolver resolver, String city, String country) {
-        int cityId = getCityId(resolver, city, country);
-        if (cityId == -1) {
-            ContentValues cv = new ContentValues();
-            cv.put(WeatherContentProvider.CITY_NAME, city);
-            cv.put(WeatherContentProvider.COUNTRY_NAME, country);
-            cv.put(WeatherContentProvider.IS_IMPORTANT, WeatherContentProvider.isNotImportant);
-            Uri uri = resolver.insert(WeatherContentProvider.CITIES_CONTENT, cv);
-            cityId = Integer.parseInt(uri.getLastPathSegment());
-        }
+    public static int addCity(ContentResolver resolver, City city) {
+        int cityId = addCity(resolver, city, WeatherContentProvider.isNotImportant);
         return cityId;
     }
 
     public static void setCurrentWeather(ContentResolver resolver, Weather weather) {
-        deleteCurWeatherByCity(resolver, weather.city, weather.country);
+        deleteCurWeatherByCity(resolver, weather.city);
         // Add city in CitiesTable
-        int cityId = addCity(resolver, weather.city, weather.country);
+        int cityId = addCity(resolver, weather.city);
         // Create values to insert
         ContentValues curWeather = weather.toCurWeatherContentValues(cityId);
         Uri uri = resolver.insert(WeatherContentProvider.CUR_WEATHER_CONTENT, curWeather);
-        System.out.println("inserted curweather in " + weather.city + " " + weather.country + " " + uri);
+        //System.out.println("inserted curweather in " + weather.city + " " + weather.country + " " + uri);
+        Log.i(LogMessage, "inserted curweather in " + weather.city + " " + uri);
     }
 
     public static void addForecast(ContentResolver resolver, Weather weather) {
         // Add city in CitiesTable
-        int cityId = addCity(resolver, weather.city, weather.country);
+        int cityId = addCity(resolver, weather.city);
         ContentValues forecast = weather.toForecastContentValues(cityId);
 
         // Check if forecast was already added
@@ -104,7 +105,7 @@ public class WeatherManager {
         if (c.getCount() == 0) {
             // It didn't
             Uri uri = resolver.insert(WeatherContentProvider.FORECAST_CONTENT, forecast);
-            System.out.println("inserted forecast in " + weather.city + " " + weather.country + " " + uri);
+            Log.i(LogMessage, "inserted forecast in " + weather.city.toString() + ", " + uri);
         } else {
             c.moveToFirst();
             int forecastId = c.getInt(c.getColumnIndexOrThrow(WeatherContentProvider.FORECAST_ID));
@@ -117,15 +118,13 @@ public class WeatherManager {
                             Integer.toString(forecastId)
                     }
             );
-            System.out.println("updated forecast in " + weather.city + " " + weather.country + " " + updated);
+            Log.i(LogMessage, "updated forecast in " + weather.city.toString() + ", updated " + updated);
         }
     }
 
-    public static Cursor getForecastByCity(ContentResolver resolver, String city, String country) {
-        if (city == null || country == null) {
-            return null;
-        }
-        int cityId = getCityId(resolver, city, country);
+    public static Cursor getForecastByCity(ContentResolver resolver, City city) {
+        assert(resolver != null && city != null);
+        int cityId = getCityId(resolver, city);
         Cursor c = resolver.query(
                 WeatherContentProvider.FORECAST_CONTENT,
                 null,
@@ -135,15 +134,16 @@ public class WeatherManager {
                 },
                 null
         );
-        System.out.println("got forecast from " + city + " " + country + " " + c.getCount());
+        Log.i(LogMessage, "got forecast from " + city.toString() + ", got " + c.getCount());
         return c;
     }
 
-    public static void deleteForecastByCity(ContentResolver resolver, String city, String country) {
-        if (city == null || country == null) {
+    public static void deleteForecastByCity(ContentResolver resolver, City city) {
+        if (city == null) {
             return;
         }
-        int cityId = getCityId(resolver, city, country);
+        assert(resolver != null);
+        int cityId = getCityId(resolver, city);
         int deleted = resolver.delete(
                 WeatherContentProvider.FORECAST_CONTENT,
                 WeatherContentProvider.FORECAST_CITY_ID + " = ? ",
@@ -151,14 +151,16 @@ public class WeatherManager {
                         String.valueOf(cityId)
                 }
         );
-        System.out.println("deleted dorecast from " + city + " " + country + " " + deleted);
+        Log.i(LogMessage, "deleted forecast from " + city.toString() + ", count = " + deleted);
     }
 
-    public static void deleteCurWeatherByCity(ContentResolver resolver, String city, String country) {
-        if (city == null || country == null) {
+    public static void deleteCurWeatherByCity(ContentResolver resolver, City city) {
+        if (city == null) {
             return;
         }
-        int cityId = getCityId(resolver, city, country);
+        assert(resolver != null);
+
+        int cityId = getCityId(resolver, city);
         int deleted = resolver.delete(
                 WeatherContentProvider.CUR_WEATHER_CONTENT,
                 WeatherContentProvider.CUR_WEATHER_CITY_ID + " = ? ",
@@ -166,21 +168,23 @@ public class WeatherManager {
                         String.valueOf(cityId)
                 }
         );
-        System.out.println("deleted curweather from " + city + " " + country + " " + deleted);
+        Log.i(LogMessage, "deleted curweather from " + city.toString() + ", count = " + deleted);
     }
 
-    public static void setImportant(ContentResolver resolver, String city, String country, String important) {
+    public static void setImportant(ContentResolver resolver, City city, String important) {
+        assert(resolver != null && city != null && important != null);
         assert(important.equals(WeatherContentProvider.isImportant)
                 || important.equals(WeatherContentProvider.isNotImportant));
-        int cityId = getCityId(resolver, city, country);
+        Log.i(LogMessage, "setting important ...");
+        int cityId = getCityId(resolver, city);
         if (cityId == -1) {
-            System.out.println("It's a new city");
-            addCity(resolver, city, country, important);
+            addCity(resolver, city, important);
             return;
         }
         ContentValues cv = new ContentValues();
-        cv.put(WeatherContentProvider.CITY_NAME, city);
-        cv.put(WeatherContentProvider.COUNTRY_NAME, country);
+        cv.put(WeatherContentProvider.CITY_NAME, city.getCityName());
+        cv.put(WeatherContentProvider.COUNTRY_NAME, city.getCountryName());
+        cv.put(WeatherContentProvider.WOEID, city.getWoeid());
         cv.put(WeatherContentProvider.IS_IMPORTANT, important);
         int updated = resolver.update(
                 WeatherContentProvider.CITIES_CONTENT,
@@ -190,7 +194,7 @@ public class WeatherManager {
                         String.valueOf(cityId)
                 }
         );
-        System.out.println("Set important, udated: " + updated);
+        Log.i(LogMessage, "Set important, updated: " + updated);
     }
 
     public static int getCloudyId(int code) {

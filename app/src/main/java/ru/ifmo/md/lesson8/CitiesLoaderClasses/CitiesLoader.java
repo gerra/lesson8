@@ -19,13 +19,16 @@ import java.net.URL;
 import java.net.URLConnection;
 import java.net.URLEncoder;
 import java.util.ArrayList;
+import java.util.List;
+
+import ru.ifmo.md.lesson8.DataClasses.City;
 
 /**
  * Created by german on 05.12.14.
  */
 public class CitiesLoader {
-    public static ArrayList<String[]> getCities(String pattern) {
-        ArrayList<String[]> cities = new ArrayList<>();
+    public static List<City> getCities(String pattern) {
+        ArrayList<City> cities = new ArrayList<>();
         if (pattern != null) {
             String query = "select * from geo.places where text=" + "\"" + pattern + "\"";
             try {
@@ -55,22 +58,27 @@ public class CitiesLoader {
     public static class XMLParser extends DefaultHandler {
         private String city;
         private String country;
+        private int woeid;
         private static final String namespace = "http://where.yahooapis.com/v1/schema.rng";
 
-        public void parse(InputStream in, final ArrayList<String[]> cities) {
+        public void parse(InputStream in, final ArrayList<City> cities) {
             RootElement root = new RootElement("query");
             Element results = root.getChild("results");
             Element place = results.getChild(namespace, "place");
+            Element woeidElement = place.getChild(namespace, "woeid");
             Element countryElement = place.getChild(namespace, "country");
             Element locality1 = place.getChild(namespace, "locality1");
 
-            countryElement.setEndTextElementListener(new EndTextElementListener() {
+            woeidElement.setEndTextElementListener(new EndTextElementListener() {
                 @Override
-                public void end(String body) {
-                    country = body;
+                public void end(String body) { woeid = Integer.parseInt(body);
                 }
             });
-
+            countryElement.setEndTextElementListener(new EndTextElementListener() {
+                @Override
+                public void end(String body) {country = body;
+                }
+            });
             locality1.setEndTextElementListener(new EndTextElementListener() {
                 @Override
                 public void end(String body) {
@@ -81,13 +89,14 @@ public class CitiesLoader {
             place.setEndElementListener(new EndElementListener() {
                 @Override
                 public void end() {
-                    if (city != null && country != null && !city.equals("") && !country.equals("")) {
-                        //System.out.println("Added " + city + " " + country);
-                        Log.i("Cities loader", "Added " + city + " " + country + " to dropdown list");
-                        cities.add(new String[]{city, country});
+                    if (city != null && country != null && !city.equals("") && !country.equals("") && woeid != -1) {
+                        City newCity = new City(city, country, woeid);
+                        Log.i("Cities loader", "Added " + newCity.toString() + " to dropdown list");
+                        cities.add(newCity);
                     }
                     city = null;
                     country = null;
+                    woeid = -1;
                 }
             });
 

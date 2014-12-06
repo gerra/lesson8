@@ -17,6 +17,7 @@ import android.widget.SimpleCursorAdapter;
 
 import ru.ifmo.md.lesson8.CitiesLoaderClasses.CityAutoCompleteAdapter;
 import ru.ifmo.md.lesson8.CitiesLoaderClasses.DelayAutoCompleteTextView;
+import ru.ifmo.md.lesson8.DataClasses.City;
 import ru.ifmo.md.lesson8.DataClasses.WeatherContentProvider;
 
 
@@ -29,7 +30,7 @@ public class CitiesListFragment extends Fragment implements LoaderManager.Loader
      * it must to update information about current city
      */
     public interface OnItemSelectedListener {
-        public void wasSelected(String city, String country);
+        public void wasSelected(City newCity);
     }
 
     OnItemSelectedListener myCallback;
@@ -57,9 +58,9 @@ public class CitiesListFragment extends Fragment implements LoaderManager.Loader
         editCity.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-                String[] curCity = (String[]) parent.getItemAtPosition(position);
-                editCity.setText(curCity[0] + ", " + curCity[1]);
-                myCallback.wasSelected(curCity[0], curCity[1]);
+                City curCity = (City) parent.getItemAtPosition(position);
+                editCity.setText(curCity.getCityName() + ", " + curCity.getCountryName());
+                myCallback.wasSelected(curCity);
             }
         });
         return view;
@@ -75,7 +76,8 @@ public class CitiesListFragment extends Fragment implements LoaderManager.Loader
                 null,
                 new String[] {
                         WeatherContentProvider.CITY_NAME,
-                        WeatherContentProvider.COUNTRY_NAME
+                        WeatherContentProvider.COUNTRY_NAME,
+                        WeatherContentProvider.WOEID
                 },
                 new int[] {
                         android.R.id.text1,
@@ -89,9 +91,11 @@ public class CitiesListFragment extends Fragment implements LoaderManager.Loader
                 Cursor cursor = adapter.getCursor();
                 cursor.moveToPosition(position);
                 String city, country;
+                int woeid;
                 city = cursor.getString(cursor.getColumnIndexOrThrow(WeatherContentProvider.CITY_NAME));
                 country = cursor.getString(cursor.getColumnIndexOrThrow(WeatherContentProvider.COUNTRY_NAME));
-                myCallback.wasSelected(city, country);
+                woeid = cursor.getInt(cursor.getColumnIndexOrThrow(WeatherContentProvider.WOEID));
+                myCallback.wasSelected(new City(city, country, woeid));
             }
         });
         getLoaderManager().initLoader(0, null, this);
