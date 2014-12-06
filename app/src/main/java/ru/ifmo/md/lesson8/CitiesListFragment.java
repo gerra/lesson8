@@ -11,12 +11,10 @@ import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.view.inputmethod.InputMethodManager;
 import android.widget.AdapterView;
 import android.widget.ListView;
 import android.widget.ProgressBar;
 import android.widget.SimpleCursorAdapter;
-import android.widget.TextView;
 
 import ru.ifmo.md.lesson8.CitiesLoaderClasses.CityAutoCompleteAdapter;
 import ru.ifmo.md.lesson8.CitiesLoaderClasses.DelayAutoCompleteTextView;
@@ -103,10 +101,6 @@ public class CitiesListFragment extends Fragment implements LoaderManager.Loader
             }
         });
 
-        TextView header = new TextView(getActivity().getApplicationContext());
-        header.setText("Favorites:");
-
-        citiesList.addHeaderView(header);
         getLoaderManager().initLoader(0, null, this);
     }
 
