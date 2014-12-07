@@ -40,9 +40,9 @@ public class XMLParser extends DefaultHandler {
     private City city;
     private boolean isFahrenheit;
 
-    private String curWind="";
-    private String curHumidity="";
-    private String curPressure="";
+    private String curWind = "";
+    private String curHumidity = "";
+    private String curPressure = "";
 
     public void parse(InputStream in) {
         RootElement root = new RootElement("query");

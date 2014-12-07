@@ -20,6 +20,7 @@ import ru.ifmo.md.lesson8.CitiesLoaderClasses.CityAutoCompleteAdapter;
 import ru.ifmo.md.lesson8.CitiesLoaderClasses.DelayAutoCompleteTextView;
 import ru.ifmo.md.lesson8.DataClasses.City;
 import ru.ifmo.md.lesson8.DataClasses.WeatherContentProvider;
+import ru.ifmo.md.lesson8.DataClasses.WeatherManager;
 
 
 public class CitiesListFragment extends Fragment implements LoaderManager.LoaderCallbacks<Cursor> {
@@ -98,6 +99,21 @@ public class CitiesListFragment extends Fragment implements LoaderManager.Loader
                 country = cursor.getString(cursor.getColumnIndexOrThrow(WeatherContentProvider.COUNTRY_NAME));
                 woeid = cursor.getInt(cursor.getColumnIndexOrThrow(WeatherContentProvider.WOEID));
                 myCallback.wasSelected(new City(city, country, woeid));
+            }
+        });
+        citiesList.setOnItemLongClickListener(new AdapterView.OnItemLongClickListener() {
+            @Override
+            public boolean onItemLongClick(AdapterView<?> parent, View view, int position, long id) {
+                Cursor cursor = adapter.getCursor();
+                cursor.moveToPosition(position);
+                String cityName, countryName;
+                int woeid;
+                cityName = cursor.getString(cursor.getColumnIndexOrThrow(WeatherContentProvider.CITY_NAME));
+                countryName = cursor.getString(cursor.getColumnIndexOrThrow(WeatherContentProvider.COUNTRY_NAME));
+                woeid = cursor.getInt(cursor.getColumnIndexOrThrow(WeatherContentProvider.WOEID));
+                City city = new City(cityName, countryName, woeid);
+                WeatherManager.setImportantly(getActivity().getContentResolver(), city, WeatherContentProvider.isNotImportant);
+                return true;
             }
         });
 

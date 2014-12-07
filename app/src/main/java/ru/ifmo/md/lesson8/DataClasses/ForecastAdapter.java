@@ -48,4 +48,10 @@ public class ForecastAdapter extends CursorAdapter {
             fTempHighView.setText(fTempHigh);
         }
     }
+
+    // Function for items were not selectable and not clickable
+    @Override
+    public boolean isEnabled(int position) {
+        return false;
+    }
 }

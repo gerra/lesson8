@@ -27,6 +27,8 @@ import ru.ifmo.md.lesson8.DataClasses.City;
  * Created by german on 05.12.14.
  */
 public class CitiesLoader {
+    private static final String LogMessage = "CitiesLoader";
+
     public static List<City> getCities(String pattern) {
         ArrayList<City> cities = new ArrayList<>();
         if (pattern != null) {
@@ -34,7 +36,7 @@ public class CitiesLoader {
             try {
                 String strUrl = "https://query.yahooapis.com/v1/public/yql?q=" + URLEncoder.encode(query, "UTF-8") + "&format=xml";
 
-                System.out.println(strUrl);
+                Log.i(LogMessage, "Querying to server with query " + query + " (url = " + strUrl + ")");
 
                 URL url = new URL(strUrl);
                 URLConnection connection = url.openConnection();
@@ -102,7 +104,7 @@ public class CitiesLoader {
 
             try {
                 Xml.parse(in, Xml.Encoding.UTF_8, root.getContentHandler());
-                System.out.println(cities.size());
+                Log.i(LogMessage, "Loaded " + cities.size() + " cities");
             } catch (IOException e) {
                 e.printStackTrace();
             } catch (SAXException e) {

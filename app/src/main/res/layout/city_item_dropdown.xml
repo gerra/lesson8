@@ -25,8 +25,8 @@
     android:gravity="center_vertical"
     android:baselineAligned="false"
     android:focusable="false"
-    android:background="#ffffff"
-    android:descendantFocusability="blocksDescendants" >
+    android:descendantFocusability="blocksDescendants"
+    android:background="#ffffff" >
 
     <LinearLayout
         android:layout_width="match_parent"

@@ -6,7 +6,6 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.BaseAdapter;
-import android.widget.Button;
 import android.widget.Filter;
 import android.widget.Filterable;
 import android.widget.ImageButton;
@@ -56,7 +55,7 @@ public class CityAutoCompleteAdapter extends BaseAdapter implements Filterable {
         final ImageButton importantButton;
         if (row == null) {
             LayoutInflater inflater = LayoutInflater.from(mContext);
-            row = inflater.inflate(R.layout.simple_dropdown_item_2line, parent, false);
+            row = inflater.inflate(R.layout.city_item_dropdown, parent, false);
             cityView = (TextView) row.findViewById(android.R.id.text1);
             countryView = (TextView) row.findViewById(android.R.id.text2);
 //            importantButton = (Button) row.findViewById(R.id.add_to_important_button);

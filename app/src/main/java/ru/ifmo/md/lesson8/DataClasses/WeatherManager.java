@@ -81,7 +81,6 @@ public class WeatherManager {
         // Create values to insert
         ContentValues curWeather = weather.toCurWeatherContentValues(cityId);
         Uri uri = resolver.insert(WeatherContentProvider.CUR_WEATHER_CONTENT, curWeather);
-        //System.out.println("inserted curweather in " + weather.city + " " + weather.country + " " + uri);
         Log.i(LogMessage, "inserted curweather in " + weather.city + " " + uri);
     }
 
@@ -303,7 +302,7 @@ public class WeatherManager {
             case 36:
                 return R.drawable.hot;
             default:
-                System.out.println("Unknown weather code: " + code);
+                Log.i(LogMessage, "Unknown weather code: " + code);
                 return R.drawable.ic_launcher;
         }
     }

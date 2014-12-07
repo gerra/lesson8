@@ -26,6 +26,8 @@ import ru.ifmo.md.lesson8.DataClasses.WeatherManager;
 public class WeatherFragment extends Fragment implements LoaderManager.LoaderCallbacks<Cursor>,
         MainActivity.CityChangedListener {
 
+    private static final String LogMessage = "Weather Fragment";
+
     private City curCity;
 
     private int cityId;
@@ -64,7 +66,7 @@ public class WeatherFragment extends Fragment implements LoaderManager.LoaderCal
 
     private void updateCurWeather(Cursor cursor) {
         if (cursor.getCount() != 0 && curCity != null) {
-            System.out.println("ok " + cursor.getCount());
+            Log.i(LogMessage, "Updating curWeather of " + curCity.toString() + " cursor.count = " + cursor.getCount());
             cursor.moveToFirst();
 
             int curTemp = cursor.getInt(cursor.getColumnIndexOrThrow(WeatherContentProvider.CUR_WEATHER_TEMP));
@@ -84,8 +86,6 @@ public class WeatherFragment extends Fragment implements LoaderManager.LoaderCal
             cwWindView.setText("Wind: " + curWind);
             cwHumidityView.setText("Humidity: " + curHumidity);
             cwPressureView.setText("Pressure: " + curPressure);
-        } else {
-            System.out.println("not ok");
         }
     }
 
@@ -127,19 +127,20 @@ public class WeatherFragment extends Fragment implements LoaderManager.LoaderCal
             whereArgs = new String[] {
                     String.valueOf(cityId)
             };
+            Log.i(LogMessage, "Forecast Loader created");
         } else /*if (id == curWeatherLoaderID)*/ {
             content = WeatherContentProvider.CUR_WEATHER_CONTENT;
             where = WeatherContentProvider.CUR_WEATHER_CITY_ID + " = ? ";
             whereArgs = new String[] {
                     String.valueOf(cityId)
             };
+            Log.i(LogMessage, "CurWeather Loader created");
         }
 
         CursorLoader res = new CursorLoader(
                 getActivity().getApplicationContext(),
                 content,
                 null, where, whereArgs, null);
-        System.out.println("loader created");
         return res;
     }
 
@@ -157,7 +158,7 @@ public class WeatherFragment extends Fragment implements LoaderManager.LoaderCal
         if (loader.getId() == forecastLoaderID) {
             adapter.swapCursor(null);
         }
-        System.out.println("reset");
+        Log.i(LogMessage, "Loader reset");
     }
 
     @Override
