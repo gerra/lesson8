@@ -78,8 +78,8 @@ public class MainActivity extends ActionBarActivity
 //        WeatherManager.addCity(getContentResolver(), "Moscow", "Russia");
 //        WeatherManager.addCity(getContentResolver(), "Almaty", "Kazakhstan");
 
-//        City spbCity = new City("St. Petersburg", "Russia", 2123260);
-//        WeatherManager.addCity(getContentResolver(), spbCity, WeatherContentProvider.isImportant);
+        City spbCity = new City("St. Petersburg", "Russia", 2123260);
+        WeatherManager.addCity(getContentResolver(), spbCity, WeatherContentProvider.isImportant);
 //        WeatherManager.setImportant(getContentResolver(), "St. Petersburg", "Russia", WeatherContentProvider.isImportant);
 
         Fragment weatherFragment = getFragmentManager().findFragmentByTag("weather_frag");
