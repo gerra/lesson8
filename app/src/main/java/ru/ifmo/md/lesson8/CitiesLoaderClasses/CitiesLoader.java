@@ -1,11 +1,13 @@
 package ru.ifmo.md.lesson8.CitiesLoaderClasses;
 
+import android.content.Context;
 import android.sax.Element;
 import android.sax.EndElementListener;
 import android.sax.EndTextElementListener;
 import android.sax.RootElement;
 import android.util.Log;
 import android.util.Xml;
+import android.widget.Toast;
 
 import org.xml.sax.SAXException;
 import org.xml.sax.helpers.DefaultHandler;
@@ -22,21 +24,22 @@ import java.util.ArrayList;
 import java.util.List;
 
 import ru.ifmo.md.lesson8.DataClasses.City;
+import ru.ifmo.md.lesson8.R;
 
 /**
  * Created by german on 05.12.14.
  */
 public class CitiesLoader {
-    private static final String LogMessage = "CitiesLoader";
+    private static final String TAG = "CitiesLoader";
 
-    public static List<City> getCities(String pattern) {
+    public static List<City> getCities(Context context, String pattern) {
         ArrayList<City> cities = new ArrayList<>();
         if (pattern != null) {
             String query = "select * from geo.places where text=" + "\"" + pattern + "\"";
             try {
                 String strUrl = "https://query.yahooapis.com/v1/public/yql?q=" + URLEncoder.encode(query, "UTF-8") + "&format=xml";
 
-                Log.i(LogMessage, "Querying to server with query " + query + " (url = " + strUrl + ")");
+                Log.i(TAG, "Querying to server with query " + query + " (url = " + strUrl + ")");
 
                 URL url = new URL(strUrl);
                 URLConnection connection = url.openConnection();
@@ -45,13 +48,17 @@ public class CitiesLoader {
                 if (responseCode == HttpURLConnection.HTTP_OK) {
                     InputStream in = httpConnection.getInputStream();
                     (new XMLParser()).parse(in, cities);
+                } else {
+                    Toast.makeText(context, R.string.error_network, Toast.LENGTH_SHORT).show();
                 }
             } catch (MalformedURLException e) {
                 e.printStackTrace();
+                Toast.makeText(context, R.string.error_network, Toast.LENGTH_SHORT).show();
             } catch (UnsupportedEncodingException e) {
                 e.printStackTrace();
             } catch (IOException e) {
                 e.printStackTrace();
+                Toast.makeText(context, R.string.error_network, Toast.LENGTH_SHORT).show();
             }
         }
         return cities;
@@ -104,7 +111,7 @@ public class CitiesLoader {
 
             try {
                 Xml.parse(in, Xml.Encoding.UTF_8, root.getContentHandler());
-                Log.i(LogMessage, "Loaded " + cities.size() + " cities");
+                Log.i(TAG, "Loaded " + cities.size() + " cities");
             } catch (IOException e) {
                 e.printStackTrace();
             } catch (SAXException e) {

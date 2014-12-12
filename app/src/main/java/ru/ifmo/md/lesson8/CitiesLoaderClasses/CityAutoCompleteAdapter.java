@@ -116,6 +116,6 @@ public class CityAutoCompleteAdapter extends BaseAdapter implements Filterable {
     }
 
     private List<City> findCities(String pattern) {
-        return CitiesLoader.getCities(pattern);
+        return CitiesLoader.getCities(mContext, pattern);
     }
 }

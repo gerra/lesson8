@@ -13,4 +13,9 @@
     <string name="favorites">Favorites</string>
     <string name="minutes_30">30 minutes</string>
     <string name="hours_3">3 hours</string>
+
+    <string name="error_network">Please check your network connection</string>
+    <string name="error_location_all">Please turn on location sharing or check your network connection</string>
+    <string name="error_location_gps">Unable to determine your location via GPS\nTrying to determine via network\nPlease wait...</string>
+    <string name="error_location_network">Unable to determine your location</string>
 </resources>

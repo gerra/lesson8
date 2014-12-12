@@ -374,6 +374,15 @@ public class WeatherManager {
         context.startService(intent);
     }
 
+    public static boolean refresh(Context context) {
+        if (curCity != null) {
+            loadWeather(context, curCity);
+            return true;
+        } else {
+            return false;
+        }
+    }
+
     public static ArrayList<Integer> getImportantCitiesWoeids(ContentResolver resolver) {
         ArrayList<Integer> woeids = new ArrayList<>();
         Cursor cursor = resolver.query(

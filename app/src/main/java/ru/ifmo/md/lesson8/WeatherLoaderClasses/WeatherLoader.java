@@ -2,6 +2,8 @@ package ru.ifmo.md.lesson8.WeatherLoaderClasses;
 
 import android.app.IntentService;
 import android.content.Intent;
+import android.util.Log;
+import android.widget.Toast;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -13,11 +15,13 @@ import java.net.URLConnection;
 import java.net.URLEncoder;
 
 import ru.ifmo.md.lesson8.DataClasses.City;
+import ru.ifmo.md.lesson8.R;
 
 /**
  * Created by german on 30.11.14.
  */
 public class WeatherLoader extends IntentService {
+    private final String TAG = getClass().getName();
 
     /**
      * Creates an IntentService.  Invoked by your subclass's constructor.
@@ -41,8 +45,6 @@ public class WeatherLoader extends IntentService {
         }
         request += "&format=xml";
 
-        System.out.println(request);
-
         URL url;
         try {
             url = new URL(request);
@@ -53,11 +55,18 @@ public class WeatherLoader extends IntentService {
                 InputStream in = httpConnection.getInputStream();
                 XMLParser parser = new XMLParser(getApplicationContext(), woeid);
                 parser.parse(in);
+            } else {
+                Toast.makeText(getApplicationContext(), R.string.error_network, Toast.LENGTH_SHORT).show();
+                Log.d(TAG, "Bad response code");
             }
         } catch (MalformedURLException e) {
             e.printStackTrace();
+            Toast.makeText(getApplicationContext(), R.string.error_network, Toast.LENGTH_SHORT).show();
+            Log.d(TAG, "Bad url");
         } catch (IOException e) {
             e.printStackTrace();
+            Toast.makeText(getApplicationContext(), R.string.error_network, Toast.LENGTH_SHORT).show();
+            Log.d(TAG, "Bad input stream");
         }
     }
 }
