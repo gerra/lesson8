@@ -6,6 +6,7 @@ import android.util.Log;
 
 import java.util.ArrayList;
 
+import ru.ifmo.md.lesson8.DataClasses.City;
 import ru.ifmo.md.lesson8.DataClasses.WeatherManager;
 
 public class UpdateService extends IntentService {
@@ -20,7 +21,11 @@ public class UpdateService extends IntentService {
         Log.d(TAG, "Starting automatic updating");
         WeatherManager.refresh(getBaseContext());
         ArrayList<Integer> woeids = WeatherManager.getImportantCitiesWoeids(getContentResolver());
-        int curCityWoeid = WeatherManager.getCurCity().getWoeid();
+        City curCity = WeatherManager.getCurCity();
+        int curCityWoeid = 0;
+        if (curCity != null) {
+            curCityWoeid =curCity.getWoeid();
+        }
         for (int woeid : woeids) {
             if (woeid != curCityWoeid) {
                 WeatherManager.loadWeather(getBaseContext(), woeid);
