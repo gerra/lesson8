@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="cities_list_background">#24324b</color>
+
+    <color name="cities_drop_list_background">#ffffff</color>
+    <color name="cities_drop_list_text1">#000000</color>
+    <color name="cities_drop_list_text2">#323232</color>
+
+    <color name="forecast_item_temp_low">#8888dd</color>
+    <color name="forecast_item_temp_high">#ee8888</color>
+    <color name="forecast_item_date">#999999</color>
+
+    <color name="cur_weather_last_update">#aaaaaa</color>
+    <color name="cur_weather_background">#eeeeee</color>
+    <color name="cur_weather_temp">#333333</color>
+
+    <color name="edit_city_text">#ffffff</color>
+
+    <color name="divider">#0000ff</color>
+</resources>

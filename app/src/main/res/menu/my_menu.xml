@@ -1,0 +1,19 @@
+<menu xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:yourapp="http://schemas.android.com/apk/res-auto" >
+    <item
+        android:id="@+id/action_refresh"
+        android:icon="@android:drawable/ic_menu_rotate"
+        android:title="Refresh"
+        yourapp:showAsAction="ifRoom"  />
+    <item
+        android:id="@+id/action_update_settings"
+        android:title="Automatic update"
+        android:icon="@android:drawable/ic_menu_preferences"
+        yourapp:showAsAction="ifRoom" />
+
+    <item
+        android:id="@+id/action_get_location"
+        android:title="Detect location"
+        android:icon="@android:drawable/ic_dialog_map"
+        yourapp:showAsAction="ifRoom" />
+</menu>
