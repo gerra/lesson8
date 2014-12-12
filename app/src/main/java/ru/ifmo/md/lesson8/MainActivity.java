@@ -100,6 +100,15 @@ public class MainActivity extends ActionBarActivity
             locationManager = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
         }
         long gpsInterval = locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER) ? 10000 : 0;
+        if (!locationManager.isProviderEnabled(LocationManager.NETWORK_PROVIDER) && !locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER)) {
+            Toast.makeText(
+                    getBaseContext(),
+                    R.string.error_location_all,
+                    Toast.LENGTH_LONG)
+                    .show();
+            Log.d(TAG, "geodata services are off");
+            return;
+        }
         mHandlerGPS = new Handler(determineLocationGPS());
         mHandlerGPS.postDelayed(new Runnable() {
             @Override
