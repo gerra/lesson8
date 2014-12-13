@@ -11,6 +11,7 @@
         android:layout_width="0in"
         android:layout_height="wrap_content"
         android:layout_weight="2"
+        android:textColor="@color/forecast_item_date"
         android:text="23.12"
         android:textSize="@dimen/forecast_text_size"/>
 
@@ -26,7 +27,7 @@
         android:layout_height="match_parent"
         android:layout_weight="1"
         android:gravity="right"
-        android:textColor="#8888dd"
+        android:textColor="@color/forecast_item_temp_low"
         android:text="-23°"
         android:textSize="@dimen/forecast_text_size" />
     <TextView
@@ -35,7 +36,7 @@
         android:layout_height="match_parent"
         android:layout_weight="1"
         android:gravity="right"
-        android:textColor="#ee8888"
+        android:textColor="@color/forecast_item_temp_high"
         android:text="23°"
         android:textSize="@dimen/forecast_text_size" />
 

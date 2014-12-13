@@ -11,6 +11,7 @@ import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.ListView;
 import android.widget.TextView;
@@ -41,7 +42,6 @@ public class WeatherFragment extends Fragment implements LoaderManager.LoaderCal
 
     // cw = current weather
     private TextView cwDateView;
-    private TextView cwTimeView;
     private TextView cwCityView;
     private TextView cwCountryView;
     private TextView cwTempView;
@@ -49,6 +49,7 @@ public class WeatherFragment extends Fragment implements LoaderManager.LoaderCal
     private TextView cwWindView;
     private TextView cwHumidityView;
     private TextView cwPressureView;
+    private ImageButton cwImportantButton;
 
     // "C" or "F"
     private String tempType = "C";
@@ -77,8 +78,7 @@ public class WeatherFragment extends Fragment implements LoaderManager.LoaderCal
             String curHumidity = cursor.getString(cursor.getColumnIndexOrThrow(WeatherContentProvider.CUR_WEATHER_HUMIDITY));
             String curPressure = cursor.getString(cursor.getColumnIndexOrThrow(WeatherContentProvider.CUR_WEATHER_PRESSURE));
 
-            cwDateView.setText(curDate);
-            cwTimeView.setText(curTime);
+            cwDateView.setText(getResources().getString(R.string.last_update, curDate, curTime));
             cwCityView.setText(curCity.getCityName());
             cwCountryView.setText(curCity.getCountryName());
             cwTempView.setText(String.valueOf(curTemp) + "°" + tempType);
@@ -104,7 +104,6 @@ public class WeatherFragment extends Fragment implements LoaderManager.LoaderCal
         forecastList.setAdapter(adapter);
 
         cwDateView = (TextView) getView().findViewById(R.id.cur_weather_date);
-        cwTimeView = (TextView) getView().findViewById(R.id.cur_weather_time);
         cwCityView = (TextView) getView().findViewById(R.id.cur_weather_city);
         cwCountryView = (TextView) getView().findViewById(R.id.cur_weather_country);
         cwTempView = (TextView) getView().findViewById(R.id.cur_weather_temp);
@@ -112,6 +111,7 @@ public class WeatherFragment extends Fragment implements LoaderManager.LoaderCal
         cwWindView = (TextView) getView().findViewById(R.id.cur_weather_wind);
         cwHumidityView = (TextView) getView().findViewById(R.id.cur_weather_humidity);
         cwPressureView = (TextView) getView().findViewById(R.id.cur_weather_pressure);
+        cwImportantButton = (ImageButton) getView().findViewById(R.id.add_to_important_button);
 
         initLoaders();
     }
@@ -162,22 +162,29 @@ public class WeatherFragment extends Fragment implements LoaderManager.LoaderCal
     }
 
     @Override
-    public void changeCity(City newCity) {
-        curCity = newCity;
+    public void changeCity() {
+        curCity = WeatherManager.getCurCity();
         cityId = WeatherManager.getCityId(getActivity().getContentResolver(), curCity);
 
         Log.i("City changed", curCity.toString() + " (id" + cityId + ")");
 
         cwCityView.setText(curCity.getCityName());
         cwCountryView.setText(curCity.getCountryName());
+        WeatherManager.setImportantlyOnImage(getActivity().getContentResolver(), curCity, cwImportantButton);
+        final City fCurCity = curCity;
+        cwImportantButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                WeatherManager.changeImportantlyAndImage(getActivity().getContentResolver(), fCurCity, cwImportantButton);
+            }
+        });
+
         cwTempView.setText("");
         cwDateView.setText("");
-        cwTimeView.setText("");
         cwWindView.setText("");
         cwHumidityView.setText("");
         cwPressureView.setText("");
         cwCloudyView.setImageDrawable(null);
-
         restartLoaders();
     }
 }

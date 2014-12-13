@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <dimen name="cur_temp_size">45sp</dimen>
+    <dimen name="cur_weather_date_size">10sp</dimen>
+    <dimen name="city_text_size">22sp</dimen>
+    <dimen name="country_text_size">15sp</dimen>
+    <dimen name="cur_addinfo_text_size">10sp</dimen>
+
+    <dimen name="margin_borders">4dp</dimen>
+
+
+    <dimen name="forecast_text_size">20sp</dimen>
+</resources>

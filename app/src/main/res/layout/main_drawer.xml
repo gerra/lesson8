@@ -9,15 +9,8 @@
     <FrameLayout
         android:id="@+id/weather_container"
         android:layout_width="match_parent"
-        android:layout_height="match_parent">
-        <!--<fragment-->
-            <!--android:layout_width="match_parent"-->
-            <!--android:layout_height="match_parent"-->
-            <!--android:id="@+id/fragment_weather"-->
-            <!--android:layout_gravity="center"-->
-            <!--android:tag="@string/weather_frag_tag"-->
-            <!--android:name="ru.ifmo.md.lesson8.WeatherFragment"-->
-            <!--tools:layout="@layout/fragment_weather" />-->
+        android:layout_height="match_parent"
+        android:background="@color/cur_weather_background" >
     </FrameLayout>
 
     <fragment

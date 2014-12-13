@@ -1,23 +1,4 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!--
-/* //device/apps/common/assets/res/any/layout/simple_spinner_item.xml
-**
-** Copyright 2008, The Android Open Source Project
-**
-** Licensed under the Apache License, Version 2.0 (the "License"); 
-** you may not use this file except in compliance with the License. 
-** You may obtain a copy of the License at 
-**
-**     http://www.apache.org/licenses/LICENSE-2.0 
-**
-** Unless required by applicable law or agreed to in writing, software 
-** distributed under the License is distributed on an "AS IS" BASIS, 
-** WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. 
-** See the License for the specific language governing permissions and 
-** limitations under the License.
-*/
--->
-
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="?android:attr/listPreferredItemHeight"
@@ -26,7 +7,7 @@
     android:baselineAligned="false"
     android:focusable="false"
     android:descendantFocusability="blocksDescendants"
-    android:background="#ffffff" >
+    android:background="@color/cities_drop_list_background" >
 
     <LinearLayout
         android:layout_width="match_parent"
@@ -41,13 +22,13 @@
             android:singleLine="true"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:textColor="#000000" />
+            android:textColor="@color/cities_drop_list_text1" />
 
         <TextView
             android:id="@android:id/text2"
             style="?android:attr/dropDownItemStyle"
             android:textAppearance="?android:attr/textAppearanceSmallPopupMenu"
-            android:textColor="#323232"
+            android:textColor="@color/cities_drop_list_text2"
             android:singleLine="true"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
@@ -61,5 +42,5 @@
         android:layout_height="match_parent"
         android:focusable="false"
         android:src="@android:drawable/star_off"
-        android:background="#ffffff" />
+        android:background="@color/cities_drop_list_background" />
 </LinearLayout>

@@ -62,8 +62,8 @@ public class CitiesListFragment extends Fragment implements LoaderManager.Loader
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
                 Log.d("Dropdown list item selected", "clicked " + position);
                 City curCity = (City) parent.getItemAtPosition(position);
-                editCity.setText(curCity.getCityName() + ", " + curCity.getCountryName());
                 myCallback.wasSelected(curCity);
+                editCity.setText("");
             }
         });
         return view;

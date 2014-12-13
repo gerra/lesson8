@@ -2,18 +2,32 @@ package ru.ifmo.md.lesson8.DataClasses;
 
 import android.content.ContentResolver;
 import android.content.ContentValues;
+import android.content.Context;
+import android.content.Intent;
 import android.database.Cursor;
 import android.net.Uri;
 import android.util.Log;
+import android.widget.ImageView;
+
+import java.util.ArrayList;
 
 import ru.ifmo.md.lesson8.R;
+import ru.ifmo.md.lesson8.WeatherLoaderClasses.WeatherLoader;
 
 /**
  * Created by german on 30.11.14.
  */
 public class WeatherManager {
     private static String LogMessage = "Weather Manager";
+    private static City curCity;
 
+    public static void setCurCity(City curCity) {
+        WeatherManager.curCity = curCity;
+    }
+
+    public static City getCurCity() {
+        return WeatherManager.curCity;
+    }
 
     /**
      * @return
@@ -303,12 +317,92 @@ public class WeatherManager {
                 return R.drawable.hot;
             default:
                 Log.i(LogMessage, "Unknown weather code: " + code);
-                return R.drawable.ic_launcher;
+                return R.drawable.cloudy;
         }
     }
 
     public static int toCelsius(int fahrTemp) {
         double dCelsTemp = (fahrTemp - 32.0) / 1.8;
         return (int) dCelsTemp;
+    }
+
+    public static void changeImportantlyAndImage(ContentResolver resolver, City city, ImageView importantButton) {
+        assert(resolver != null && city != null && importantButton != null);
+        int cityId = getCityId(resolver, city);
+        String importantly = getImportantly(resolver, cityId);
+        if (cityId == -1) {
+            addCity(resolver, city, WeatherContentProvider.isImportant);
+            importantButton.setImageResource(WeatherContentProvider.importantDrawable);
+        } else {
+            if (importantly.equals(WeatherContentProvider.isImportant)) {
+                setImportantly(resolver, city, WeatherContentProvider.isNotImportant);
+                importantButton.setImageResource(WeatherContentProvider.notImportantDrawable);
+            } else {
+                setImportantly(resolver, city, WeatherContentProvider.isImportant);
+                importantButton.setImageResource(WeatherContentProvider.importantDrawable);
+            }
+        }
+    }
+
+    public static void setImportantlyOnImage(ContentResolver resolver, City city, ImageView importantButton) {
+        assert(resolver != null && city != null && importantButton != null);
+        int cityId = getCityId(resolver, city);
+        assert(cityId != -1);
+        String importantly = getImportantly(resolver, cityId);
+
+        if (importantly.equals(WeatherContentProvider.isImportant)) {
+            setImportantly(resolver, city, WeatherContentProvider.isImportant);
+            importantButton.setImageResource(WeatherContentProvider.importantDrawable);
+        } else {
+            setImportantly(resolver, city, WeatherContentProvider.isNotImportant);
+            importantButton.setImageResource(WeatherContentProvider.notImportantDrawable);
+        }
+    }
+
+    public static void loadWeather(Context context, City city) {
+        if (city == null) {
+            return;
+        }
+        Intent intent = new Intent(context, WeatherLoader.class);
+        intent.putExtra(City.WOEID_BUNDLE_KEY, city.getWoeid());
+        context.startService(intent);
+    }
+
+    public static void loadWeather(Context context, int woeid) {
+        Intent intent = new Intent(context, WeatherLoader.class);
+        intent.putExtra(City.WOEID_BUNDLE_KEY, woeid);
+        context.startService(intent);
+    }
+
+    public static boolean refresh(Context context) {
+        if (curCity != null) {
+            loadWeather(context, curCity);
+            return true;
+        } else {
+            return false;
+        }
+    }
+
+    public static ArrayList<Integer> getImportantCitiesWoeids(ContentResolver resolver) {
+        ArrayList<Integer> woeids = new ArrayList<>();
+        Cursor cursor = resolver.query(
+                WeatherContentProvider.CITIES_CONTENT,
+                new String[] {
+                        WeatherContentProvider.WOEID
+                },
+                WeatherContentProvider.IS_IMPORTANT + " = ? ",
+                new String[] {
+                        WeatherContentProvider.isImportant
+                },
+                null
+        );
+        cursor.moveToFirst();
+        int cnt = cursor.getCount();
+        for (int i = 0; i < cnt; i++) {
+            woeids.add(new Integer(cursor.getInt(cursor.getColumnIndexOrThrow(WeatherContentProvider.WOEID))));
+            cursor.moveToNext();
+        }
+        cursor.close();
+        return woeids;
     }
 }
