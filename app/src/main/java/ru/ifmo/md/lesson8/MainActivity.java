@@ -243,6 +243,11 @@ public class MainActivity extends ActionBarActivity
     }
 
     @Override
+    public Object onRetainCustomNonConfigurationInstance() {
+        return new Object();
+    }
+
+    @Override
     protected void onPostCreate(Bundle savedInstanceState) {
         super.onPostCreate(savedInstanceState);
         if (mToggle != null) {
@@ -273,8 +278,13 @@ public class MainActivity extends ActionBarActivity
             wasSelected(curCity);
         }
         hideKeyboard();
-        Intent intent = new Intent(this, UpdateService.class);
-        startService(intent);
+
+        Object saved = getLastCustomNonConfigurationInstance();
+        if (saved == null) {
+            Log.d(TAG, "First time create");
+            Intent intent = new Intent(this, UpdateService.class);
+            startService(intent);
+        }
     }
 
     @Override

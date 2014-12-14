@@ -363,9 +363,7 @@ public class WeatherManager {
         if (city == null) {
             return;
         }
-        Intent intent = new Intent(context, WeatherLoader.class);
-        intent.putExtra(City.WOEID_BUNDLE_KEY, city.getWoeid());
-        context.startService(intent);
+        loadWeather(context, city.getWoeid());
     }
 
     public static void loadWeather(Context context, int woeid) {
